@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search as SearchIcon, X, ArrowRight, Clock, TrendingUp } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -13,7 +14,7 @@ interface Props {
 }
 
 const RECENT_KEY = 'niprep_searches';
-const SUGGESTED  = ['event loop', 'promises', 'TypeScript generics', 'system design', 'SQL joins', 'Docker', 'JWT', 'SOLID'];
+const SUGGESTED = ['event loop', 'promises', 'TypeScript generics', 'system design', 'SQL joins', 'Docker', 'JWT', 'SOLID'];
 
 function loadRecentSearches(): string[] {
   try {
@@ -33,13 +34,41 @@ function saveSearch(query: string, existing: string[]): string[] {
 function matchItems(query: string, items: SearchItem[]): SearchItem[] {
   const q = query.toLowerCase().trim();
   if (!q) return [];
+  const tokens = q.split(/\s+/).filter(Boolean);
+
+  function score(item: SearchItem): number {
+    const title = item.title.toLowerCase();
+    const section = item.section.toLowerCase();
+    const excerpt = item.excerpt.toLowerCase();
+    const path = item.path.toLowerCase();
+
+    let points = 0;
+    if (title === q) points += 140;
+    if (title.startsWith(q)) points += 90;
+    if (title.includes(q)) points += 60;
+    if (path.includes(q)) points += 45;
+    if (section.includes(q)) points += 20;
+    if (excerpt.includes(q)) points += 15;
+
+    for (const token of tokens) {
+      if (title.includes(token)) points += 18;
+      if (path.includes(token)) points += 12;
+      if (section.includes(token)) points += 8;
+      if (excerpt.includes(token)) points += 4;
+    }
+
+    if (tokens.every(token => title.includes(token) || path.includes(token) || excerpt.includes(token))) {
+      points += 24;
+    }
+
+    return points;
+  }
+
   return items
-    .filter(
-      item =>
-        item.title.toLowerCase().includes(q) ||
-        item.section.toLowerCase().includes(q) ||
-        item.excerpt.toLowerCase().includes(q),
-    )
+    .map(item => ({ item, score: score(item) }))
+    .filter(entry => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title))
+    .map(entry => entry.item)
     .slice(0, 9);
 }
 
@@ -61,6 +90,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
 }
 
 export default function Search({ index, onClose }: Props) {
+  const router = useRouter();
   const [query, setQuery]       = useState('');
   const [results, setResults]   = useState<SearchItem[]>([]);
   const [selected, setSelected] = useState(0);
@@ -90,14 +120,24 @@ export default function Search({ index, onClose }: Props) {
     [onClose],
   );
 
+  const openSelected = useCallback(() => {
+    const item = results[selected];
+    if (!item) return;
+    handleClose(query);
+    router.push('/' + item.slug.join('/'));
+  }, [results, selected, handleClose, query, router]);
+
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') { handleClose(); return; }
       if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, results.length - 1)); }
       if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
-      if (e.key === 'Enter' && results[selected]) handleClose(query);
+      if (e.key === 'Enter' && results[selected]) {
+        e.preventDefault();
+        openSelected();
+      }
     },
-    [results, selected, query, handleClose],
+    [results, selected, handleClose, openSelected],
   );
 
   useEffect(() => {
@@ -175,7 +215,7 @@ export default function Search({ index, onClose }: Props) {
                       </div>
                       {item.section && (
                         <div className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
-                          {item.section}
+                          {item.path}
                         </div>
                       )}
                       {item.excerpt && (

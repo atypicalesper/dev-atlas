@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, KeyboardEvent } from 'react';
+import Link from 'next/link';
 import { Plus, Trash2, Check, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import {
   type Pathway,
@@ -9,6 +10,8 @@ import {
   savePathways,
   mkPathway,
   mkItem,
+  PATHWAY_TEMPLATES,
+  mkTemplatePathway,
 } from '@/lib/pathway';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -121,20 +124,42 @@ export default function PathwayClient() {
 
       {/* empty state */}
       {pathways.length === 0 && !adding && (
-        <div
-          className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed text-center"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <span className="text-4xl mb-4">🗺️</span>
-          <p className="font-semibold mb-1" style={{ color: 'var(--fg)' }}>No pathways yet</p>
-          <p className="text-sm mb-5" style={{ color: 'var(--muted)' }}>Create a study plan to track topics you want to cover.</p>
-          <button
-            onClick={() => { setAdding(true); setTimeout(() => newNameRef.current?.focus(), 0); }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90"
-            style={{ backgroundColor: 'var(--accent)' }}
+        <div className="space-y-6">
+          <div
+            className="flex flex-col items-center justify-center py-16 rounded-2xl border border-dashed text-center"
+            style={{ borderColor: 'var(--border)' }}
           >
-            <Plus size={14} /> Create first pathway
-          </button>
+            <span className="text-4xl mb-4">🗺️</span>
+            <p className="font-semibold mb-1" style={{ color: 'var(--fg)' }}>No pathways yet</p>
+            <p className="text-sm mb-5" style={{ color: 'var(--muted)' }}>Create a study plan or start from a ready-made template.</p>
+            <button
+              onClick={() => { setAdding(true); setTimeout(() => newNameRef.current?.focus(), 0); }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90"
+              style={{ backgroundColor: 'var(--accent)' }}
+            >
+              <Plus size={14} /> Create first pathway
+            </button>
+          </div>
+
+          <div>
+            <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--fg)' }}>Starter templates</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PATHWAY_TEMPLATES.map(template => (
+                <button
+                  key={template.id}
+                  onClick={() => persist([...pathways, mkTemplatePathway(template)])}
+                  className="rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                >
+                  <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{template.name}</div>
+                  <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{template.description}</div>
+                  <div className="mt-2 text-[11px]" style={{ color: 'var(--accent)' }}>
+                    {template.items.length} starting topics
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -150,6 +175,28 @@ export default function PathwayClient() {
           />
         ))}
       </div>
+
+      {pathways.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--fg)' }}>Add a starter template</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {PATHWAY_TEMPLATES.map(template => (
+              <button
+                key={template.id}
+                onClick={() => persist([...pathways, mkTemplatePathway(template)])}
+                className="rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+                style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+              >
+                <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{template.name}</div>
+                <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{template.description}</div>
+                <div className="mt-2 text-[11px]" style={{ color: 'var(--accent)' }}>
+                  {template.items.length} starting topics
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* summary stats */}
       {pathways.length > 0 && totalItems > 0 && (
@@ -359,17 +406,35 @@ function PathwayCard({ pathway, onDelete, onRename, onItemsChange }: CardProps) 
                   autoFocus
                 />
               ) : (
-                <span
-                  className="flex-1 text-sm cursor-default leading-5"
-                  style={{
-                    color: item.done ? 'var(--muted)' : 'var(--fg)',
-                    textDecoration: item.done ? 'line-through' : 'none',
-                  }}
-                  onDoubleClick={() => setEditingItem(item.id)}
-                  title="Double-click to edit"
-                >
-                  {item.text}
-                </span>
+                item.href ? (
+                  <Link
+                    href={`/${item.href}`}
+                    className="flex-1 text-sm leading-5 hover:underline"
+                    style={{
+                      color: item.done ? 'var(--muted)' : 'var(--fg)',
+                      textDecoration: item.done ? 'line-through' : 'none',
+                    }}
+                    onDoubleClick={e => {
+                      e.preventDefault();
+                      setEditingItem(item.id);
+                    }}
+                    title="Open topic"
+                  >
+                    {item.text}
+                  </Link>
+                ) : (
+                  <span
+                    className="flex-1 text-sm cursor-default leading-5"
+                    style={{
+                      color: item.done ? 'var(--muted)' : 'var(--fg)',
+                      textDecoration: item.done ? 'line-through' : 'none',
+                    }}
+                    onDoubleClick={() => setEditingItem(item.id)}
+                    title="Double-click to edit"
+                  >
+                    {item.text}
+                  </span>
+                )
               )}
 
               {/* row actions */}

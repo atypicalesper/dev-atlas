@@ -3,6 +3,12 @@ import path from 'path';
 
 // Absolute path to the markdown content directory
 const DOCS_ROOT = path.join(process.cwd(), '..', 'docs');
+const navCache = new Map<string, NavItem[]>();
+const docCache = new Map<string, { content: string; title: string } | null>();
+const dirCache = new Map<string, DirInfo | null>();
+let allDocSlugsCache: string[][] | null = null;
+let allDirSlugsCache: string[][] | null = null;
+let searchIndexCache: SearchItem[] | null = null;
 
 export interface Heading {
   depth: number;
@@ -15,6 +21,7 @@ export interface SearchItem {
   slug: string[];
   excerpt: string;
   section: string;
+  path: string;
 }
 
 export interface NavItem {
@@ -55,6 +62,10 @@ export function humanize(name: string): string {
 
 /** Recursively build the navigation tree from the docs directory */
 export function buildNavTree(dir: string = DOCS_ROOT, prefix: string[] = []): NavItem[] {
+  const cacheKey = `${dir}::${prefix.join('/')}`;
+  const cached = navCache.get(cacheKey);
+  if (cached) return cached;
+
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
   // Sort: directories first by name, then files
@@ -88,17 +99,24 @@ export function buildNavTree(dir: string = DOCS_ROOT, prefix: string[] = []): Na
     }
   }
 
+  navCache.set(cacheKey, items);
   return items;
 }
 
 /** Resolve a slug array to a file path and return its content */
 export function getDocContent(slug: string[]): { content: string; title: string } | null {
+  const cacheKey = slug.join('/');
+  if (docCache.has(cacheKey)) return docCache.get(cacheKey) ?? null;
+
   const mdPath = path.join(DOCS_ROOT, ...slug) + '.md';
   if (fs.existsSync(mdPath)) {
     const content = fs.readFileSync(mdPath, 'utf-8');
     const title = extractTitle(content) ?? humanize(slug[slug.length - 1]);
-    return { content, title };
+    const result = { content, title };
+    docCache.set(cacheKey, result);
+    return result;
   }
+  docCache.set(cacheKey, null);
   return null;
 }
 
@@ -109,12 +127,20 @@ export interface DirInfo {
 
 /** Resolve a slug to a directory and return its children for an index page */
 export function getDirInfo(slug: string[]): DirInfo | null {
+  const cacheKey = slug.join('/');
+  if (dirCache.has(cacheKey)) return dirCache.get(cacheKey) ?? null;
+
   const dirPath = path.join(DOCS_ROOT, ...slug);
   if (!fs.existsSync(dirPath) || !fs.statSync(dirPath).isDirectory()) return null;
   const title = humanize(slug[slug.length - 1]);
   const children = buildNavTree(dirPath, slug);
-  if (children.length === 0) return null;
-  return { title, children };
+  if (children.length === 0) {
+    dirCache.set(cacheKey, null);
+    return null;
+  }
+  const result = { title, children };
+  dirCache.set(cacheKey, result);
+  return result;
 }
 
 function extractTitle(markdown: string): string | null {
@@ -124,6 +150,8 @@ function extractTitle(markdown: string): string | null {
 
 /** Return all valid doc slugs (for static generation) */
 export function getAllDocSlugs(): string[][] {
+  if (allDocSlugsCache) return allDocSlugsCache;
+
   const slugs: string[][] = [];
 
   function walk(dir: string, prefix: string[]) {
@@ -139,11 +167,14 @@ export function getAllDocSlugs(): string[][] {
   }
 
   walk(DOCS_ROOT, []);
+  allDocSlugsCache = slugs;
   return slugs;
 }
 
 /** Return all directory slugs (so /section/subsection URLs don't 404) */
 export function getAllDirSlugs(): string[][] {
+  if (allDirSlugsCache) return allDirSlugsCache;
+
   const slugs: string[][] = [];
 
   function walk(dir: string, prefix: string[]) {
@@ -159,6 +190,7 @@ export function getAllDirSlugs(): string[][] {
   }
 
   walk(DOCS_ROOT, []);
+  allDirSlugsCache = slugs;
   return slugs;
 }
 
@@ -229,21 +261,16 @@ export function extractExcerpt(markdown: string, maxLength = 155): string {
 
 /** Build a flat search index of all docs for client-side search */
 export function buildSearchIndex(): SearchItem[] {
+  if (searchIndexCache) return searchIndexCache;
+
   const slugs = getAllDocSlugs();
-  return slugs.map(slug => {
+  searchIndexCache = slugs.map(slug => {
     const doc = getDocContent(slug)!;
-    // Strip markdown to get a plain-text excerpt
-    const plain = doc.content
-      .replace(/^#{1,6}\s+.+$/gm, '')
-      .replace(/```[\s\S]*?```/g, ' ')
-      .replace(/`[^`]+`/g, '')
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      .replace(/[*_~>#|\\-]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
     const section = slug[0] ? humanize(slug[0]) : '';
+    const pathLabel = slug.map(part => humanize(part)).join(' / ');
+    const excerpt = extractExcerpt(doc.content, 220);
 
-    return { title: doc.title, slug, excerpt: plain, section };
+    return { title: doc.title, slug, excerpt, section, path: pathLabel };
   });
+  return searchIndexCache;
 }

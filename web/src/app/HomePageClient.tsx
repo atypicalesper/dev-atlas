@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRef, useState, useLayoutEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, type LucideIcon } from 'lucide-react';
+import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, type LucideIcon } from 'lucide-react';
 import { getVisitedCountBySection, getRecent } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
 import RoughBorder from '@/components/RoughBorder';
@@ -71,6 +71,29 @@ const SECTIONS: { icon: LucideIcon; title: string; slug: string; desc: string; b
     slug: 'cheatsheets',
     desc: 'All quick-reference cheatsheets in one place — JavaScript, React, Frontend, Backend, DSA patterns, System Design. Optimised for last-minute interview revision.',
     badge: 'NEW',
+  },
+];
+
+const GUIDED_PATHS = [
+  {
+    title: 'Frontend',
+    desc: 'HTML, CSS, DOM, React, Next.js, and performance in one run.',
+    href: '/react/00-frontend-fundamentals/01-html-semantics-accessibility',
+  },
+  {
+    title: 'Backend',
+    desc: 'HTTP, Node internals, databases, API design, and reliability.',
+    href: '/node/00-backend-fundamentals/01-http-and-rest',
+  },
+  {
+    title: 'AI Engineer',
+    desc: 'Prompting, RAG, agents, evaluations, and production LLM systems.',
+    href: '/ai/00-roadmap/01-ai-developer-roadmap',
+  },
+  {
+    title: 'Interview Sprint',
+    desc: 'Cheatsheets, rapid-fire Q&A, and system design practice.',
+    href: '/engineering/12-interview-practice/00-cheat-sheet/01-last-day-reference',
   },
 ];
 
@@ -173,6 +196,28 @@ export default function HomePageClient({ pageCounts }: Props) {
         </div>
 
       </div>{/* end hero */}
+
+      <div className="mb-10">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles size={14} style={{ color: 'var(--accent)' }} />
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
+            Guided Starts
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {GUIDED_PATHS.map(path => (
+            <Link
+              key={path.title}
+              href={path.href}
+              className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+              style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+            >
+              <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{path.title}</div>
+              <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{path.desc}</div>
+            </Link>
+          ))}
+        </div>
+      </div>
 
       {/* ── Section grid ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

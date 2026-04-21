@@ -9,6 +9,7 @@ import ReadingProgress from '@/components/ReadingProgress';
 import DocPageClient from '@/components/DocPageClient';
 import PrevNextNav from '@/components/PrevNextNav';
 import NotebookProseDecor from '@/components/NotebookProseDecor';
+import AddToPathwayButton from '@/components/AddToPathwayButton';
 import { Clock, FolderOpen, ChevronRight } from 'lucide-react';
 
 interface PageProps {
@@ -223,11 +224,13 @@ export default async function DocPage({ params }: PageProps) {
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <Breadcrumb slug={slug} />
 
-            {/* Reading time */}
-            <span className="reading-badge">
-              <Clock size={11} />
-              {readingTime(doc.content)}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="reading-badge">
+                <Clock size={11} />
+                {readingTime(doc.content)}
+              </span>
+              <AddToPathwayButton title={doc.title} href={`/${slug.join('/')}`} />
+            </div>
           </div>
 
           {/* Markdown content */}

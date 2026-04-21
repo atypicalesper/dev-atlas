@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import Image from 'next/image';
 import { ChevronRight, Search, ArrowLeft, Map, ExternalLink, Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, FileText, type LucideIcon } from 'lucide-react';
 import type { NavItem } from '@/lib/docs';
+import { getRecent } from '@/lib/progress';
 import ThemeToggle from './ThemeToggle';
 import NotebookToggle from './NotebookToggle';
 
@@ -31,6 +32,7 @@ interface Props {
 export default function Sidebar({ nav, onSearchOpen }: Props) {
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLElement>(null);
+  const [recentPages, setRecentPages] = useState<Array<{ slug: string; title: string }>>([]);
 
   // Detect which top-level section we're inside (null = home)
   const activeTopSlug = pathname === '/' ? null : pathname.split('/')[1] ?? null;
@@ -40,6 +42,10 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
   useEffect(() => {
     const active = sidebarRef.current?.querySelector('.nav-active') as HTMLElement | null;
     active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [pathname]);
+
+  useEffect(() => {
+    setRecentPages(getRecent().slice(0, 4));
   }, [pathname]);
 
   return (
@@ -95,7 +101,7 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
 
       {activeSection ? (
         /* ── Section view: only current section's tree ── */
-        <SectionNav section={activeSection} pathname={pathname} />
+        <SectionNav section={activeSection} pathname={pathname} recentPages={recentPages} />
       ) : (
         /* ── Home view: all sections as compact list ── */
         <AllSectionsNav nav={nav} pathname={pathname} />
@@ -162,9 +168,18 @@ function AllSectionsNav({ nav, pathname }: { nav: NavItem[]; pathname: string })
 
 // ─── Section view: back button + section nav tree ────────────────────────────
 
-function SectionNav({ section, pathname }: { section: NavItem; pathname: string }) {
+function SectionNav({
+  section,
+  pathname,
+  recentPages,
+}: {
+  section: NavItem;
+  pathname: string;
+  recentPages: Array<{ slug: string; title: string }>;
+}) {
   const slug0 = section.slug[0];
   const Icon = SECTION_ICONS[slug0] ?? FileText;
+  const crossTopicRecents = recentPages.filter(page => !page.slug.startsWith(slug0 + '/')).slice(0, 3);
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -191,6 +206,26 @@ function SectionNav({ section, pathname }: { section: NavItem; pathname: string 
 
       {/* Nav tree — only this section */}
       <nav className="flex-1 px-2 pb-3 overflow-y-auto">
+        {crossTopicRecents.length > 0 && (
+          <div className="px-1 pt-2 pb-2">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+              Jump Back In
+            </div>
+            <div className="space-y-1">
+              {crossTopicRecents.map(page => (
+                <Link
+                  key={page.slug}
+                  href={`/${page.slug}`}
+                  className="block rounded-md px-2 py-1.5 text-[11px] leading-snug transition-colors hover:bg-[var(--sidebar-hover)]"
+                  style={{ color: 'var(--muted)' }}
+                  title={page.title}
+                >
+                  {page.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
         <div
           className="mt-1 space-y-0.5"
         >
