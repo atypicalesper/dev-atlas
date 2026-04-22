@@ -30,6 +30,13 @@ export interface NavItem {
   children?: NavItem[];
 }
 
+export interface DocSummary {
+  title: string;
+  slug: string[];
+  section: string;
+  excerpt: string;
+}
+
 const ACRONYMS: Record<string, string> = {
   cicd: 'CI/CD',
   api: 'API',
@@ -273,4 +280,38 @@ export function buildSearchIndex(): SearchItem[] {
     return { title: doc.title, slug, excerpt, section, path: pathLabel };
   });
   return searchIndexCache;
+}
+
+export function getDocSummaries(): DocSummary[] {
+  return getAllDocSlugs().map(slug => {
+    const doc = getDocContent(slug)!;
+    return {
+      title: doc.title,
+      slug,
+      section: slug[0] ? humanize(slug[0]) : '',
+      excerpt: extractExcerpt(doc.content, 140),
+    };
+  });
+}
+
+export function getRelatedDocs(currentSlug: string[], limit = 3): DocSummary[] {
+  const currentKey = currentSlug.join('/');
+  const currentTitle = humanize(currentSlug[currentSlug.length - 1]).toLowerCase();
+  const currentTokens = new Set(currentTitle.split(/\s+/).filter(Boolean));
+
+  return getDocSummaries()
+    .filter(doc => doc.slug.join('/') !== currentKey)
+    .map(doc => {
+      let score = 0;
+      if (doc.slug[0] === currentSlug[0]) score += 12;
+      const titleTokens = doc.title.toLowerCase().split(/\s+/).filter(Boolean);
+      for (const token of titleTokens) {
+        if (currentTokens.has(token)) score += 4;
+      }
+      if (doc.slug.slice(0, 2).join('/') === currentSlug.slice(0, 2).join('/')) score += 6;
+      return { doc, score };
+    })
+    .sort((a, b) => b.score - a.score || a.doc.title.localeCompare(b.doc.title))
+    .slice(0, limit)
+    .map(entry => entry.doc);
 }

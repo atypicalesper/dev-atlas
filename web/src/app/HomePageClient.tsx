@@ -5,10 +5,11 @@ import Image from 'next/image';
 import { useRef, useState, useLayoutEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, type LucideIcon } from 'lucide-react';
-import { getVisitedCountBySection, getRecent } from '@/lib/progress';
+import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, type LucideIcon } from 'lucide-react';
+import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
 import RoughBorder from '@/components/RoughBorder';
+import type { DocSummary } from '@/lib/docs';
 
 const SECTIONS: { icon: LucideIcon; title: string; slug: string; desc: string; badge?: string }[] = [
   {
@@ -99,14 +100,20 @@ const GUIDED_PATHS = [
 
 interface Props {
   pageCounts: Record<string, number>;
+  docs: DocSummary[];
+  featuredDoc: DocSummary;
+  challengeDocs: Array<{ title: string; href: string }>;
 }
 
-export default function HomePageClient({ pageCounts }: Props) {
+export default function HomePageClient({ pageCounts, docs, featuredDoc, challengeDocs }: Props) {
   const gridRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
   const [visitedCounts, setVisitedCounts] = useState<Record<string, number>>({});
   const [recentSlug, setRecentSlug] = useState<{ slug: string; title: string } | null>(null);
+  const [bookmarkCount, setBookmarkCount] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [surpriseDoc, setSurpriseDoc] = useState<DocSummary>(featuredDoc);
 
   useLayoutEffect(() => {
     const counts: Record<string, number> = {};
@@ -119,6 +126,8 @@ export default function HomePageClient({ pageCounts }: Props) {
     if (recent.length > 0) {
       setRecentSlug({ slug: recent[0].slug, title: recent[0].title });
     }
+    setBookmarkCount(getBookmarkCount());
+    setStreak(getVisitStreak());
   }, []);
 
   useGSAP(() => {
@@ -133,6 +142,12 @@ export default function HomePageClient({ pageCounts }: Props) {
 
   const { notebook } = useNotebook();
   const totalVisited = Object.values(visitedCounts).reduce((a, b) => a + b, 0);
+
+  function pickSurprise() {
+    const pool = docs.filter(doc => doc.slug.join('/') !== surpriseDoc.slug.join('/'));
+    const next = pool[Math.floor(Math.random() * pool.length)] ?? featuredDoc;
+    setSurpriseDoc(next);
+  }
 
   return (
     <div className="px-4 sm:px-8 py-8 sm:py-10 max-w-5xl mx-auto" ref={gridRef}>
@@ -193,9 +208,81 @@ export default function HomePageClient({ pageCounts }: Props) {
               Continue
             </Link>
           )}
+          <button
+            onClick={pickSurprise}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border inline-flex items-center gap-2"
+            style={{ color: 'var(--fg)', borderColor: 'var(--border)', backgroundColor: 'var(--card-bg)' }}
+          >
+            <Dice5 size={14} />
+            Surprise Me
+          </button>
         </div>
 
       </div>{/* end hero */}
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 mb-10">
+        <Link
+          href={`/${featuredDoc.slug.join('/')}`}
+          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--accent)' }}>
+            Today in Atlas
+          </div>
+          <div className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>{featuredDoc.title}</div>
+          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{featuredDoc.excerpt}</div>
+        </Link>
+
+        <div
+          className="rounded-2xl border p-5"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted)' }}>
+            Your Momentum
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <StatTile icon={Flame} value={String(streak)} label="Day streak" />
+            <StatTile icon={Heart} value={String(bookmarkCount)} label="Bookmarks" />
+            <StatTile icon={Trophy} value={String(totalVisited)} label="Pages seen" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-4 mb-10">
+        <Link
+          href={`/${surpriseDoc.slug.join('/')}`}
+          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+            <Dice5 size={12} />
+            Surprise Pick
+          </div>
+          <div className="text-base font-semibold" style={{ color: 'var(--fg)' }}>{surpriseDoc.title}</div>
+          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{surpriseDoc.excerpt}</div>
+        </Link>
+
+        <div
+          className="rounded-2xl border p-5"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted)' }}>
+            Challenge Mode
+          </div>
+          <div className="space-y-2">
+            {challengeDocs.map(doc => (
+              <Link
+                key={doc.href}
+                href={doc.href}
+                className="block rounded-xl border px-3 py-2 text-sm transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)', color: 'var(--fg)' }}
+              >
+                {doc.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="mb-10">
         <div className="mb-3 flex items-center gap-2">
@@ -327,6 +414,26 @@ export default function HomePageClient({ pageCounts }: Props) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function StatTile({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: LucideIcon;
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border)' }}>
+      <div className="mb-2 flex items-center gap-2" style={{ color: 'var(--accent)' }}>
+        <Icon size={14} />
+        <span className="text-lg font-bold" style={{ color: 'var(--fg)' }}>{value}</span>
+      </div>
+      <div className="text-xs" style={{ color: 'var(--muted)' }}>{label}</div>
     </div>
   );
 }

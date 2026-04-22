@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getDocContent, getDirInfo, getPrevNext, getAllDocSlugs, getAllDirSlugs, extractHeadings, extractExcerpt, humanize } from '@/lib/docs';
+import { getDocContent, getDirInfo, getPrevNext, getAllDocSlugs, getAllDirSlugs, extractHeadings, extractExcerpt, humanize, getRelatedDocs } from '@/lib/docs';
 import type { NavItem } from '@/lib/docs';
 import MarkdownContent from '@/components/MarkdownContent';
 import TableOfContents from '@/components/TableOfContents';
@@ -10,7 +10,8 @@ import DocPageClient from '@/components/DocPageClient';
 import PrevNextNav from '@/components/PrevNextNav';
 import NotebookProseDecor from '@/components/NotebookProseDecor';
 import AddToPathwayButton from '@/components/AddToPathwayButton';
-import { Clock, FolderOpen, ChevronRight } from 'lucide-react';
+import FavoriteButton from '@/components/FavoriteButton';
+import { Clock, FolderOpen, ChevronRight, Zap } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ slug: string[] }>;
@@ -20,6 +21,14 @@ function readingTime(markdown: string): string {
   const words = markdown.trim().split(/\s+/).length;
   const mins  = Math.ceil(words / 250);
   return `${mins} min read`;
+}
+
+function readingVibe(markdown: string): string {
+  const words = markdown.trim().split(/\s+/).length;
+  const mins  = Math.ceil(words / 250);
+  if (mins <= 6) return 'Quick Win';
+  if (mins <= 14) return 'Deep Dive';
+  return 'Boss Battle';
 }
 
 /** Count total leaf-file descendants of a NavItem */
@@ -175,6 +184,7 @@ export default async function DocPage({ params }: PageProps) {
 
   const { prev, next } = getPrevNext(slug);
   const headings = extractHeadings(doc.content);
+  const relatedDocs = getRelatedDocs(slug, 3);
   const prevHref = prev ? '/' + prev.slug.join('/') : undefined;
   const nextHref = next ? '/' + next.slug.join('/') : undefined;
 
@@ -229,6 +239,11 @@ export default async function DocPage({ params }: PageProps) {
                 <Clock size={11} />
                 {readingTime(doc.content)}
               </span>
+              <span className="reading-badge">
+                <Zap size={11} />
+                {readingVibe(doc.content)}
+              </span>
+              <FavoriteButton href={`/${slug.join('/')}`} />
               <AddToPathwayButton title={doc.title} href={`/${slug.join('/')}`} />
             </div>
           </div>
@@ -236,6 +251,27 @@ export default async function DocPage({ params }: PageProps) {
           {/* Markdown content */}
           <MarkdownContent markdown={doc.content} />
           <NotebookProseDecor />
+
+          {relatedDocs.length > 0 && (
+            <div className="mt-10 border-t pt-6" style={{ borderColor: 'var(--border)' }}>
+              <div className="mb-3 text-sm font-semibold" style={{ color: 'var(--fg)' }}>
+                Keep the streak going
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {relatedDocs.map(related => (
+                  <Link
+                    key={related.slug.join('/')}
+                    href={`/${related.slug.join('/')}`}
+                    className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                  >
+                    <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{related.title}</div>
+                    <div className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{related.excerpt}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Prev / Next navigation */}
           <PrevNextNav prev={prev ?? undefined} next={next ?? undefined} prevHref={prevHref} nextHref={nextHref} />
