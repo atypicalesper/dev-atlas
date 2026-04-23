@@ -8,6 +8,8 @@ Distributed systems fail in partial ways:
 
 That is why retries alone are dangerous unless paired with idempotency.
 
+Critical rule: **never retry a non-idempotent write without an idempotency key**. A retried `POST /charge` without a key is how you charge a customer twice. If the handler is not idempotent and you can't add a key, the correct behavior on timeout is to *not* retry and surface the error — not to silently re-send.
+
 ---
 
 ## Retries
@@ -25,6 +27,10 @@ Good retries use:
 - clear retryable error rules
 
 Bad retries cause retry storms.
+
+Critical rule: **always add jitter to backoff**. Pure exponential backoff (`2s, 4s, 8s, 16s`) causes every retrying client to fire at exactly the same instants, which synchronizes load spikes onto the failing dependency. Jitter randomizes the retry time (`rand(0, 2s)`, `rand(0, 4s)`, …) and spreads the herd.
+
+Critical rule: **every retry loop needs a cap**. No retry budget is unlimited — set max attempts, max total elapsed time, or both. Unbounded retries on a dead dependency turn transient failure into infinite resource consumption.
 
 ---
 

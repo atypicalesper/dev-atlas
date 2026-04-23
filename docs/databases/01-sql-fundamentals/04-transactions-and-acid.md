@@ -78,6 +78,10 @@ BEGIN ISOLATION LEVEL REPEATABLE READ;
 BEGIN ISOLATION LEVEL SERIALIZABLE;
 ```
 
+Critical rule: **the default is `READ COMMITTED`, not `SERIALIZABLE`**. New engineers often assume their transactions are stronger than they actually are. If you need a read to stay consistent across multiple statements in the same transaction, you must *explicitly* set `REPEATABLE READ` or higher — the default will let another transaction's commits appear mid-flight.
+
+Critical rule: **long-running transactions are production hazards**. Every open transaction pins the MVCC xmin horizon, prevents vacuum from cleaning dead tuples, holds locks, and can escalate to deadlock. Keep transactions short; never open one and then go do HTTP calls.
+
 ---
 
 ## Locking

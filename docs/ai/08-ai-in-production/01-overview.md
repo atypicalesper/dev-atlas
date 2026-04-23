@@ -1,5 +1,9 @@
 # AI in Production — Cost, Latency, Reliability & Monitoring
 
+Critical rule: **treat every LLM output as untrusted input to the rest of your system**. Validate the schema, sanitize before rendering, and never pass model output directly into `eval`, `exec`, shell commands, SQL, or `dangerouslySetInnerHTML`. The model doesn't need to be "jailbroken" — even honest outputs occasionally contain the wrong thing.
+
+Critical rule: **set an explicit timeout on every LLM call**. Default HTTP clients often wait forever; a stuck upstream request holds a connection, a thread, and a user. Cap at whatever your UX allows (e.g. 30s) and fail fast.
+
 ## The Production Reality
 
 ```

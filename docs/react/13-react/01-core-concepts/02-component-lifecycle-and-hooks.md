@@ -141,6 +141,10 @@ useEffect(() => {
 }, [userId]); // re-runs when userId changes
 ```
 
+Critical rule: **any subscription, timer, or listener you create inside `useEffect` must be cleaned up in the returned cleanup function**. Skipping cleanup leaks memory on unmount *and* stacks duplicate handlers on every re-run of the effect. If your effect has no cleanup and you're subscribing to anything — that's a bug, even if it isn't firing yet.
+
+Critical rule: **never silence the exhaustive-deps lint rule to "make it work"**. Missing dependencies mean your effect is reading stale values from a closure and will behave mysteriously. If the rule complains, the fix is almost always to add the dep (and possibly wrap the callback in `useCallback`) — not to disable the rule.
+
 ### Common Mistake: Object/Array Dependencies
 
 ```jsx

@@ -260,6 +260,8 @@ async def answer(q: str):
 
 Anthropic caches the first N tokens of your prompt at 90% discount if reused within 5 minutes.
 
+Critical rule: **prompt caching works prefix-first — any change before the `cache_control` marker invalidates the cache**. Order your prompt stable-to-dynamic: system prompt, then tool definitions, then the large static context, *then* the per-request user message. Inserting today's date into the system prompt (or shuffling tool order) silently throws away every cache hit.
+
 ```python
 import anthropic
 

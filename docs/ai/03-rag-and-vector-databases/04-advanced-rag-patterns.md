@@ -56,6 +56,8 @@ def hyde_retrieve(query: str, vectorstore, k: int = 5) -> list:
 
 Retrieve more candidates, then rerank them with a cross-encoder for precision.
 
+Critical rule: **retrieve wide, rerank narrow — never the other way around**. Top-5 from the vector store fed into a reranker cannot recover documents the vector search missed. Pull top-20 or top-50 candidates, then let the reranker pick the final 3–5. Reranking is precision; retrieval is recall. You need both.
+
 ```python
 from sentence_transformers import CrossEncoder
 from langchain_openai import OpenAIEmbeddings
@@ -474,6 +476,8 @@ Causes:
 4. LLM training data conflicts with retrieved content
    Fix: stronger instruction: "Your training knowledge is outdated, use ONLY this context"
 ```
+
+Critical rule: **"lost in the middle" is real — position matters more than people think**. LLMs weight chunks at the beginning and end of their context far more reliably than chunks in the middle. If you have 10 chunks, put the top-ranked one *first*, the second-best *last*, and the rest in between. Don't just concatenate in retrieval order.
 
 **"RAG works in testing but fails in production with real user queries"**
 ```

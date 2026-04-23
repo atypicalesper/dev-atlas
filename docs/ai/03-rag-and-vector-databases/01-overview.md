@@ -47,6 +47,10 @@ LLM Generation
 Response (grounded in retrieved docs)
 ```
 
+Critical rule: **the index and the query must use the same embedding model and same preprocessing pipeline**. Changing the model, changing the chunker, or even changing the normalization step silently invalidates every stored vector. Bump an `EMBEDDING_VERSION` constant and re-index whenever any of those change — otherwise your scores drift and nobody notices for weeks.
+
+Critical rule: **if RAG is hallucinating, fix retrieval before prompting**. 80% of "the LLM is wrong" bugs are actually "the right chunk was never in the context." Log the retrieved chunks for a failing query before you touch the system prompt.
+
 ---
 
 ## Chunking Strategies
@@ -85,6 +89,8 @@ chunks = splitter.split_text(document)
 | More chunks to retrieve | Fewer API calls |
 | May miss context | May include noise |
 | Better for Q&A | Better for summarization |
+
+Critical rule: **chunk boundaries matter more than chunk size**. Splitting mid-sentence or mid-code-block destroys the semantic unit and wrecks retrieval, regardless of how clever your size is. Always split at natural boundaries (paragraph, heading, function) first; fall back to fixed size only when no structure exists.
 
 ---
 

@@ -98,6 +98,10 @@ React's diffing algorithm (also called reconciliation) is the process of compari
 // Result: React inserts ONE node — much better
 ```
 
+Critical rule: **keys must be stable, unique, and derived from the data — never the array index for reorderable lists**. `key={index}` is fine only for a list that never reorders, inserts, or deletes in the middle. The moment order changes, React matches the wrong items, which silently corrupts component state (form inputs show the wrong value, animations play on the wrong element). Use a stable ID from your data.
+
+Critical rule: **`key={Math.random()}` or any fresh value per render defeats reconciliation entirely** — React unmounts and remounts every child on every parent render, discarding internal state and DOM. If you need a new component instance on some change, pass the *specific trigger* as the key (e.g. `key={userId}`), not a random value.
+
 ---
 
 ## Reconciliation Process — Step by Step

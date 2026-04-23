@@ -107,6 +107,10 @@ EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'alice@example.com';
 
 ## Index Pitfalls
 
+Critical rule: **an unused index is worse than no index** — it pays the write tax without the read payoff. Before adding an index, check `pg_stat_user_indexes.idx_scan` after a representative workload. If it's zero, drop it. Indexes that exist "just in case" silently slow every INSERT, UPDATE, and DELETE forever.
+
+Critical rule: **never `CREATE INDEX` on a large production table without `CONCURRENTLY`**. The non-concurrent form takes an `ACCESS EXCLUSIVE` lock and blocks every reader and writer until it finishes — which on a 100M-row table is minutes of downtime. `CREATE INDEX CONCURRENTLY` takes longer but doesn't block traffic.
+
 Indexes can be silently bypassed by seemingly innocuous query patterns. The most common pitfall is applying a function to an indexed column in a `WHERE` clause — the database cannot match a function's output against the raw index values, so it falls back to a full scan. Similarly, implicit type casting (comparing an integer column to a string literal) and leading wildcards in `LIKE` patterns both prevent index use. Knowing these pitfalls lets you rewrite queries or create the right kind of index to maintain performance.
 
 ```sql

@@ -195,6 +195,12 @@ final_answer = Counter(answers).most_common(1)[0][0]
 
 Useful when: model is borderline uncertain, consistency > latency.
 
+Critical rule: **temperature=0 is not the same as deterministic**. Even at `temperature=0` with identical prompts, providers may return different outputs because of batching order, GPU non-determinism, or silent model updates. For tests that need *exact* match, hash the output and only assert on semantic equivalence — or pin the model version and accept that bit-exact reproducibility is not a guarantee anyone ships.
+
+Critical rule: **the system prompt is part of your cache key — and so is every tool definition**. With prompt caching, even a single whitespace change invalidates the cache for the entire prefix. Keep the system prompt and tool list stable across requests; if they genuinely need to vary, structure them so the stable part comes first and the variable part comes later.
+
+Critical rule: **never put secrets, API keys, or unredacted PII in a prompt you can't delete later**. Provider logs, prompt caches, and eval datasets all retain what you send. Assume everything in the prompt may be recalled 90 days from now under a subpoena or a data export request.
+
 ---
 
 ## Prompt Injection & Security
