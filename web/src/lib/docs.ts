@@ -9,6 +9,7 @@ const dirCache = new Map<string, DirInfo | null>();
 let allDocSlugsCache: string[][] | null = null;
 let allDirSlugsCache: string[][] | null = null;
 let searchIndexCache: SearchItem[] | null = null;
+let docSummariesCache: DocSummary[] | null = null;
 
 export interface Heading {
   depth: number;
@@ -283,7 +284,8 @@ export function buildSearchIndex(): SearchItem[] {
 }
 
 export function getDocSummaries(): DocSummary[] {
-  return getAllDocSlugs().map(slug => {
+  if (docSummariesCache) return docSummariesCache;
+  docSummariesCache = getAllDocSlugs().map(slug => {
     const doc = getDocContent(slug)!;
     return {
       title: doc.title,
@@ -292,6 +294,7 @@ export function getDocSummaries(): DocSummary[] {
       excerpt: extractExcerpt(doc.content, 140),
     };
   });
+  return docSummariesCache;
 }
 
 export function getRelatedDocs(currentSlug: string[], limit = 3): DocSummary[] {

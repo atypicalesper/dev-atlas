@@ -102,10 +102,11 @@ interface Props {
   pageCounts: Record<string, number>;
   docs: DocSummary[];
   featuredDoc: DocSummary;
+  initialSurpriseDoc: DocSummary;
   challengeDocs: Array<{ title: string; href: string }>;
 }
 
-export default function HomePageClient({ pageCounts, docs, featuredDoc, challengeDocs }: Props) {
+export default function HomePageClient({ pageCounts, docs, featuredDoc, initialSurpriseDoc, challengeDocs }: Props) {
   const gridRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +114,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, challeng
   const [recentSlug, setRecentSlug] = useState<{ slug: string; title: string } | null>(null);
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [surpriseDoc, setSurpriseDoc] = useState<DocSummary>(featuredDoc);
+  const [surpriseDoc, setSurpriseDoc] = useState<DocSummary>(initialSurpriseDoc);
 
   useLayoutEffect(() => {
     const counts: Record<string, number> = {};
@@ -144,8 +145,13 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, challeng
   const totalVisited = Object.values(visitedCounts).reduce((a, b) => a + b, 0);
 
   function pickSurprise() {
-    const pool = docs.filter(doc => doc.slug.join('/') !== surpriseDoc.slug.join('/'));
-    const next = pool[Math.floor(Math.random() * pool.length)] ?? featuredDoc;
+    const currentKey = surpriseDoc.slug.join('/');
+    const featuredKey = featuredDoc.slug.join('/');
+    const pool = docs.filter(doc => {
+      const key = doc.slug.join('/');
+      return key !== currentKey && key !== featuredKey;
+    });
+    const next = pool[Math.floor(Math.random() * pool.length)] ?? initialSurpriseDoc;
     setSurpriseDoc(next);
   }
 
