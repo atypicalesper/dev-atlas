@@ -10,7 +10,11 @@ export interface RecentPage {
 }
 
 function isoDay(ts: number): string {
-  return new Date(ts).toISOString().slice(0, 10);
+  const d = new Date(ts);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function getRawVisited(): string[] {
@@ -99,9 +103,13 @@ export function getVisitDays(): string[] {
 
 export function getVisitStreak(): number {
   const days = new Set(getVisitDays());
-  let streak = 0;
   const cursor = new Date();
 
+  if (!days.has(isoDay(cursor.getTime()))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  let streak = 0;
   while (days.has(isoDay(cursor.getTime()))) {
     streak += 1;
     cursor.setDate(cursor.getDate() - 1);

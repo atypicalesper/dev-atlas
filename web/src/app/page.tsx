@@ -1,6 +1,21 @@
 import { getAllDocSlugs, getDocContent, getDocSummaries } from '@/lib/docs';
 import HomePageClient from './HomePageClient';
 
+function isoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
 export default function HomePage() {
   // Count markdown files per top-level section for progress bars
   const slugs = getAllDocSlugs();
@@ -12,8 +27,13 @@ export default function HomePage() {
   }
 
   const docs = getDocSummaries();
-  const dayIndex = new Date().getDate() % docs.length;
-  const featuredDoc = docs[dayIndex];
+  const today = isoDate(new Date());
+  const featuredIndex = hashString(today) % docs.length;
+  const featuredDoc = docs[featuredIndex];
+  const surpriseIndex = hashString(today + ':surprise') % docs.length;
+  const initialSurpriseDoc = docs[surpriseIndex].slug.join('/') === featuredDoc.slug.join('/')
+    ? docs[(surpriseIndex + 1) % docs.length]
+    : docs[surpriseIndex];
 
   const challengeSlugs = [
     ['engineering', '12-interview-practice', '00-cheat-sheet', '01-last-day-reference'],
@@ -27,5 +47,13 @@ export default function HomePage() {
     })
     .filter(Boolean) as Array<{ title: string; href: string }>;
 
-  return <HomePageClient pageCounts={pageCounts} docs={docs} featuredDoc={featuredDoc} challengeDocs={challengeDocs} />;
+  return (
+    <HomePageClient
+      pageCounts={pageCounts}
+      docs={docs}
+      featuredDoc={featuredDoc}
+      initialSurpriseDoc={initialSurpriseDoc}
+      challengeDocs={challengeDocs}
+    />
+  );
 }
