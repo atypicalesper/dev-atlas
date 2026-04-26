@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { useRef, useState, useLayoutEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, type LucideIcon } from 'lucide-react';
-import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak } from '@/lib/progress';
+import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, Compass, ArrowRightLeft, type LucideIcon } from 'lucide-react';
+import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak, getVisitedSet, getBookmarks } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
 import RoughBorder from '@/components/RoughBorder';
 import type { DocSummary } from '@/lib/docs';
@@ -104,9 +104,10 @@ interface Props {
   featuredDoc: DocSummary;
   initialSurpriseDoc: DocSummary;
   challengeDocs: Array<{ title: string; href: string }>;
+  compareDocs: Array<{ title: string; href: string }>;
 }
 
-export default function HomePageClient({ pageCounts, docs, featuredDoc, initialSurpriseDoc, challengeDocs }: Props) {
+export default function HomePageClient({ pageCounts, docs, featuredDoc, initialSurpriseDoc, challengeDocs, compareDocs }: Props) {
   const gridRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
@@ -115,6 +116,8 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [streak, setStreak] = useState(0);
   const [surpriseDoc, setSurpriseDoc] = useState<DocSummary>(initialSurpriseDoc);
+  const [quickWins, setQuickWins] = useState<DocSummary[]>([]);
+  const [oldBookmark, setOldBookmark] = useState<DocSummary | null>(null);
 
   useLayoutEffect(() => {
     const counts: Record<string, number> = {};
@@ -129,7 +132,20 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
     }
     setBookmarkCount(getBookmarkCount());
     setStreak(getVisitStreak());
-  }, []);
+
+    const visited = getVisitedSet();
+    const quickWinPool = docs
+      .filter(doc => !visited.has(doc.slug.join('/')))
+      .sort((a, b) => a.wordCount - b.wordCount)
+      .slice(0, 3);
+    setQuickWins(quickWinPool);
+
+    const bookmarkSlugs = getBookmarks();
+    const bookmarkedDoc = bookmarkSlugs.length > 0
+      ? docs.find(doc => doc.slug.join('/') === bookmarkSlugs[bookmarkSlugs.length - 1]) ?? null
+      : null;
+    setOldBookmark(bookmarkedDoc);
+  }, [docs]);
 
   useGSAP(() => {
     gsap.from(heroRef.current, {
@@ -143,6 +159,16 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
 
   const { notebook } = useNotebook();
   const totalVisited = Object.values(visitedCounts).reduce((a, b) => a + b, 0);
+  const weakestSections = SECTIONS
+    .map(section => {
+      const visited = visitedCounts[section.slug] ?? 0;
+      const total = pageCounts[section.slug] ?? 0;
+      const pct = total > 0 ? Math.round((visited / total) * 100) : 0;
+      return { ...section, visited, total, pct };
+    })
+    .filter(section => section.visited > 0 && section.total > 0 && section.pct < 100)
+    .sort((a, b) => a.pct - b.pct)
+    .slice(0, 2);
 
   function pickSurprise() {
     const currentKey = surpriseDoc.slug.join('/');
@@ -287,6 +313,108 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
               </Link>
             ))}
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1fr] gap-4 mb-10">
+        <div
+          className="rounded-2xl border p-5"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+            <Compass size={12} />
+            Quick Wins
+          </div>
+          <div className="space-y-2">
+            {quickWins.map(doc => (
+              <Link
+                key={doc.href}
+                href={doc.href}
+                className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)', color: 'var(--fg)' }}
+              >
+                <span className="truncate pr-3">{doc.title}</span>
+                <span className="shrink-0 text-[10px]" style={{ color: 'var(--muted)' }}>
+                  {Math.max(1, Math.ceil(doc.wordCount / 250))} min
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div
+          className="rounded-2xl border p-5"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+            Weak Spots
+          </div>
+          <div className="space-y-3">
+            {weakestSections.length > 0 ? weakestSections.map(section => (
+              <Link
+                key={section.slug}
+                href={`/${section.slug}`}
+                className="block rounded-xl border px-3 py-3 transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="mb-1 text-sm font-semibold" style={{ color: 'var(--fg)' }}>{section.title}</div>
+                <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                  {section.visited}/{section.total} pages visited
+                </div>
+              </Link>
+            )) : (
+              <div className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
+                Start a second topic and this will turn into a personal catch-up list.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          className="rounded-2xl border p-5"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+            Revisit Later
+          </div>
+          {oldBookmark ? (
+            <Link
+              href={oldBookmark.href}
+              className="block rounded-xl border px-3 py-3 transition-colors hover:bg-[var(--sidebar-hover)]"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{oldBookmark.title}</div>
+              <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{oldBookmark.excerpt}</div>
+            </Link>
+          ) : (
+            <div className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
+              Bookmark a few tricky reads and this becomes your comeback pile.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-10">
+        <div className="mb-3 flex items-center gap-2">
+          <ArrowRightLeft size={14} style={{ color: 'var(--accent)' }} />
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
+            Compare & Decide
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {compareDocs.map(doc => (
+            <Link
+              key={doc.href}
+              href={doc.href}
+              className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+              style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+            >
+              <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{doc.title}</div>
+              <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
+                Perfect when you want trade-offs, not just definitions.
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
