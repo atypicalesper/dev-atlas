@@ -309,6 +309,8 @@ LIMIT 10;
 
 **Production recommendation:** Start with hybrid search + parent-child chunking. Add HyDE if precision is low on technical queries.
 
+Critical rule: **measure before adding strategies — every technique here adds latency, cost, or complexity**. Start with basic similarity search, build an eval set of real failing queries, then add *one* technique at a time and measure whether `context_recall` / `context_precision` actually moved. Stacking HyDE + multi-query + reranking + compression on a system that works fine without them just burns tokens.
+
 ---
 
 ## Links to Refer

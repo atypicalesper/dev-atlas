@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getDocContent, getDirInfo, getPrevNext, getAllDocSlugs, getAllDirSlugs, extractHeadings, extractExcerpt, humanize, getRelatedDocs } from '@/lib/docs';
+import { getDocContent, getDirInfo, getPrevNext, getAllDocSlugs, getAllDirSlugs, extractHeadings, extractExcerpt, humanize, getRelatedDocs, getPracticeDoc, getCompareDoc } from '@/lib/docs';
 import type { NavItem } from '@/lib/docs';
 import MarkdownContent from '@/components/MarkdownContent';
 import TableOfContents from '@/components/TableOfContents';
@@ -185,6 +185,8 @@ export default async function DocPage({ params }: PageProps) {
   const { prev, next } = getPrevNext(slug);
   const headings = extractHeadings(doc.content);
   const relatedDocs = getRelatedDocs(slug, 3);
+  const practiceDoc = getPracticeDoc(slug);
+  const compareDoc = getCompareDoc(slug);
   const prevHref = prev ? '/' + prev.slug.join('/') : undefined;
   const nextHref = next ? '/' + next.slug.join('/') : undefined;
 
@@ -252,23 +254,36 @@ export default async function DocPage({ params }: PageProps) {
           <MarkdownContent markdown={doc.content} />
           <NotebookProseDecor />
 
-          {relatedDocs.length > 0 && (
+          {(relatedDocs.length > 0 || practiceDoc || compareDoc) && (
             <div className="mt-10 border-t pt-6" style={{ borderColor: 'var(--border)' }}>
               <div className="mb-3 text-sm font-semibold" style={{ color: 'var(--fg)' }}>
                 Keep the streak going
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {relatedDocs.map(related => (
-                  <Link
-                    key={related.slug.join('/')}
-                    href={`/${related.slug.join('/')}`}
-                    className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
-                    style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-                  >
-                    <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{related.title}</div>
-                    <div className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{related.excerpt}</div>
-                  </Link>
-                ))}
+                {relatedDocs[0] && (
+                  <RecommendationCard
+                    label="Learn next"
+                    title={relatedDocs[0].title}
+                    excerpt={relatedDocs[0].excerpt}
+                    href={`/${relatedDocs[0].slug.join('/')}`}
+                  />
+                )}
+                {practiceDoc && (
+                  <RecommendationCard
+                    label="Practice this"
+                    title={practiceDoc.title}
+                    excerpt={practiceDoc.excerpt}
+                    href={practiceDoc.href}
+                  />
+                )}
+                {compareDoc && (
+                  <RecommendationCard
+                    label="Compare with"
+                    title={compareDoc.title}
+                    excerpt={compareDoc.excerpt}
+                    href={compareDoc.href}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -281,5 +296,31 @@ export default async function DocPage({ params }: PageProps) {
         <TableOfContents headings={headings} />
       </div>
     </>
+  );
+}
+
+function RecommendationCard({
+  label,
+  title,
+  excerpt,
+  href,
+}: {
+  label: string;
+  title: string;
+  excerpt: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+      style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+    >
+      <div className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--accent)' }}>
+        {label}
+      </div>
+      <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{title}</div>
+      <div className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{excerpt}</div>
+    </Link>
   );
 }

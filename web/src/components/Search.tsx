@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search as SearchIcon, X, ArrowRight, Clock, TrendingUp } from 'lucide-react';
+import { Search as SearchIcon, X, ArrowRight, Clock, TrendingUp, Shuffle, Heart, Layers3 } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import type { SearchItem } from '@/lib/docs';
+import { getBookmarks } from '@/lib/progress';
 
 interface Props {
   index: SearchItem[];
@@ -31,10 +32,40 @@ function saveSearch(query: string, existing: string[]): string[] {
   return updated;
 }
 
+function parseQuery(raw: string): {
+  text: string;
+  section?: string;
+  kind?: SearchItem['kind'];
+} {
+  const tokens = raw.trim().split(/\s+/).filter(Boolean);
+  const textTokens: string[] = [];
+  let section: string | undefined;
+  let kind: SearchItem['kind'] | undefined;
+
+  for (const token of tokens) {
+    const lower = token.toLowerCase();
+    if (lower.startsWith('section:')) {
+      section = lower.replace('section:', '');
+      continue;
+    }
+    if (lower.startsWith('kind:')) {
+      const nextKind = lower.replace('kind:', '');
+      if (nextKind === 'cheatsheet' || nextKind === 'interview' || nextKind === 'guide') {
+        kind = nextKind;
+        continue;
+      }
+    }
+    textTokens.push(token);
+  }
+
+  return { text: textTokens.join(' ').toLowerCase().trim(), section, kind };
+}
+
 function matchItems(query: string, items: SearchItem[]): SearchItem[] {
-  const q = query.toLowerCase().trim();
-  if (!q) return [];
+  const parsed = parseQuery(query);
+  const q = parsed.text;
   const tokens = q.split(/\s+/).filter(Boolean);
+  if (!q && !parsed.section && !parsed.kind) return [];
 
   function score(item: SearchItem): number {
     const title = item.title.toLowerCase();
@@ -43,6 +74,14 @@ function matchItems(query: string, items: SearchItem[]): SearchItem[] {
     const path = item.path.toLowerCase();
 
     let points = 0;
+    if (parsed.section) {
+      if (section === parsed.section) points += 60;
+      else if (!section.includes(parsed.section)) return 0;
+    }
+    if (parsed.kind) {
+      if (item.kind === parsed.kind) points += 40;
+      else return 0;
+    }
     if (title === q) points += 140;
     if (title.startsWith(q)) points += 90;
     if (title.includes(q)) points += 60;
@@ -95,6 +134,7 @@ export default function Search({ index, onClose }: Props) {
   const [results, setResults]   = useState<SearchItem[]>([]);
   const [selected, setSelected] = useState(0);
   const [recents, setRecents]   = useState<string[]>([]);
+  const [bookmarks, setBookmarks] = useState<string[]>([]);
   const inputRef    = useRef<HTMLInputElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef    = useRef<HTMLDivElement>(null);
@@ -104,7 +144,10 @@ export default function Search({ index, onClose }: Props) {
     gsap.from(panelRef.current, { opacity: 0, y: -14, scale: 0.97, duration: 0.24, ease: 'power3.out' });
   });
 
-  useEffect(() => { setRecents(loadRecentSearches()); }, []);
+  useEffect(() => {
+    setRecents(loadRecentSearches());
+    setBookmarks(getBookmarks());
+  }, []);
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   useEffect(() => {
@@ -126,6 +169,20 @@ export default function Search({ index, onClose }: Props) {
     handleClose(query);
     router.push('/' + item.slug.join('/'));
   }, [results, selected, handleClose, query, router]);
+
+  const openRandom = useCallback(() => {
+    const random = index[Math.floor(Math.random() * index.length)];
+    if (!random) return;
+    handleClose();
+    router.push('/' + random.slug.join('/'));
+  }, [index, handleClose, router]);
+
+  const openBookmarked = useCallback(() => {
+    const firstBookmark = bookmarks[0];
+    if (!firstBookmark) return;
+    handleClose();
+    router.push('/' + firstBookmark);
+  }, [bookmarks, handleClose, router]);
 
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
@@ -214,8 +271,16 @@ export default function Search({ index, onClose }: Props) {
                         <Highlight text={item.title} query={query} />
                       </div>
                       {item.section && (
-                        <div className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
-                          {item.path}
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                            {item.path}
+                          </div>
+                          <span
+                            className="rounded-full px-1.5 py-0.5 text-[10px] uppercase"
+                            style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--sidebar-active-text)' }}
+                          >
+                            {item.kind}
+                          </span>
                         </div>
                       )}
                       {item.excerpt && (
@@ -288,6 +353,44 @@ export default function Search({ index, onClose }: Props) {
                 ))}
               </div>
             </div>
+
+            <div className="border-t mx-4 my-1" style={{ borderColor: 'var(--border)' }} />
+
+            <div>
+              <div
+                className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--muted)' }}
+              >
+                Quick Actions
+              </div>
+              <div className="px-4 pb-3 flex flex-wrap gap-2">
+                <button
+                  onClick={openRandom}
+                  className="px-3 py-1 rounded-full text-xs transition-colors border hover:bg-[var(--sidebar-hover)] inline-flex items-center gap-1.5"
+                  style={{ borderColor: 'var(--border)', color: 'var(--fg)' }}
+                >
+                  <Shuffle size={11} />
+                  Random doc
+                </button>
+                <button
+                  onClick={() => setQuery('kind:cheatsheet')}
+                  className="px-3 py-1 rounded-full text-xs transition-colors border hover:bg-[var(--sidebar-hover)] inline-flex items-center gap-1.5"
+                  style={{ borderColor: 'var(--border)', color: 'var(--fg)' }}
+                >
+                  <Layers3 size={11} />
+                  Cheatsheets
+                </button>
+                <button
+                  onClick={openBookmarked}
+                  disabled={bookmarks.length === 0}
+                  className="px-3 py-1 rounded-full text-xs transition-colors border hover:bg-[var(--sidebar-hover)] inline-flex items-center gap-1.5 disabled:opacity-40"
+                  style={{ borderColor: 'var(--border)', color: 'var(--fg)' }}
+                >
+                  <Heart size={11} />
+                  First bookmark
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -299,6 +402,7 @@ export default function Search({ index, onClose }: Props) {
           <span><kbd className="kbd">↑↓</kbd> navigate</span>
           <span><kbd className="kbd">↵</kbd> open</span>
           <span><kbd className="kbd">esc</kbd> close</span>
+          <span><kbd className="kbd">section:</kbd> filter</span>
         </div>
       </div>
     </div>

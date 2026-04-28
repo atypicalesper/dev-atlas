@@ -31,6 +31,10 @@ dot_product = sum(a * b for a, b in zip(A, B))
 
 Most RAG systems use **cosine similarity** with normalized embeddings.
 
+Critical rule: **normalize vectors once, not twice**. If your embedding model already returns unit-length vectors (most do — OpenAI, sentence-transformers with `normalize_embeddings=True`), re-normalizing is a no-op but mixing normalized and unnormalized vectors in the same index silently ruins cosine scores. Pick one convention per index and never mix.
+
+Critical rule: **the index's dimension must exactly match the embedding model's output dimension**. Creating a `VECTOR(1536)` column and inserting 3072-dim vectors fails loudly (good). Using truncated Matryoshka embeddings and *forgetting* to match the index dimension fails silently with degraded scores (bad). Encode the dimension in a config constant and assert it at insert time.
+
 ### ANN Algorithms
 
 | Algorithm | Index Type | Speed | Accuracy | Memory |
@@ -41,6 +45,8 @@ Most RAG systems use **cosine similarity** with normalized embeddings.
 | Flat/Exact | Brute force | Slow | Perfect | Medium |
 
 HNSW is the default for most production systems — best speed/accuracy trade-off.
+
+Critical rule: **ANN is *approximate* — top-K from an ANN index is not the same as top-K from a brute-force scan**. At low `ef_search` / `nprobe` values you trade recall for speed. If you're debugging "the obviously relevant doc isn't being retrieved," raise recall first and verify the doc is in the corpus before blaming embeddings or chunking.
 
 ---
 

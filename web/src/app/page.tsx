@@ -47,6 +47,19 @@ export default function HomePage() {
     })
     .filter(Boolean) as Array<{ title: string; href: string }>;
 
+  const compareSlugs = [
+    ['cloud', '06-sqs-vs-sns-vs-eventbridge'],
+    ['cloud', '07-ecs-vs-eks-vs-lambda'],
+    ['node', '07-api-design', '03-grpc', '01-grpc-vs-rest'],
+    ['react', '19-runtimes', '01-bun-and-deno'],
+  ];
+  const compareDocs = compareSlugs
+    .map(slug => {
+      const doc = getDocContent(slug);
+      return doc ? { title: doc.title, href: '/' + slug.join('/') } : null;
+    })
+    .filter(Boolean) as Array<{ title: string; href: string }>;
+
   return (
     <HomePageClient
       pageCounts={pageCounts}
@@ -54,6 +67,7 @@ export default function HomePage() {
       featuredDoc={featuredDoc}
       initialSurpriseDoc={initialSurpriseDoc}
       challengeDocs={challengeDocs}
+      compareDocs={compareDocs}
     />
   );
 }
