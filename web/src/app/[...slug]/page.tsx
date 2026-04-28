@@ -11,6 +11,9 @@ import PrevNextNav from '@/components/PrevNextNav';
 import NotebookProseDecor from '@/components/NotebookProseDecor';
 import AddToPathwayButton from '@/components/AddToPathwayButton';
 import FavoriteButton from '@/components/FavoriteButton';
+import LearningToolkit from '@/components/LearningToolkit';
+import SectionQuiz from '@/components/SectionQuiz';
+import { getDocQuiz, getSectionQuiz } from '@/lib/quizzes';
 import { Clock, FolderOpen, ChevronRight, Zap } from 'lucide-react';
 
 interface PageProps {
@@ -105,6 +108,7 @@ export default async function DocPage({ params }: PageProps) {
   if (!doc) {
     const dir = getDirInfo(slug);
     if (!dir) notFound();
+    const sectionQuiz = getSectionQuiz(slug);
 
     return (
       <div className="page-content max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
@@ -117,6 +121,8 @@ export default async function DocPage({ params }: PageProps) {
         <p className="text-sm mb-8" style={{ color: 'var(--muted)' }}>
           {dir.children.length} {dir.children.length === 1 ? 'section' : 'sections'}
         </p>
+
+        {sectionQuiz && <SectionQuiz quiz={sectionQuiz} />}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {dir.children.map((child, i) => {
@@ -187,6 +193,7 @@ export default async function DocPage({ params }: PageProps) {
   const relatedDocs = getRelatedDocs(slug, 3);
   const practiceDoc = getPracticeDoc(slug);
   const compareDoc = getCompareDoc(slug);
+  const docQuiz = getDocQuiz(slug);
   const prevHref = prev ? '/' + prev.slug.join('/') : undefined;
   const nextHref = next ? '/' + next.slug.join('/') : undefined;
 
@@ -253,6 +260,16 @@ export default async function DocPage({ params }: PageProps) {
           {/* Markdown content */}
           <MarkdownContent markdown={doc.content} />
           <NotebookProseDecor />
+          {docQuiz && <SectionQuiz quiz={docQuiz} />}
+          <LearningToolkit
+            title={doc.title}
+            excerpt={extractExcerpt(doc.content, 180)}
+            headings={headings.map(heading => heading.text)}
+            practiceHref={practiceDoc?.href}
+            practiceTitle={practiceDoc?.title}
+            compareHref={compareDoc?.href}
+            compareTitle={compareDoc?.title}
+          />
 
           {(relatedDocs.length > 0 || practiceDoc || compareDoc) && (
             <div className="mt-10 border-t pt-6" style={{ borderColor: 'var(--border)' }}>

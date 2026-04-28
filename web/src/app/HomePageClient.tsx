@@ -252,18 +252,64 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
 
       </div>{/* end hero */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 mb-10">
-        <Link
-          href={`/${featuredDoc.slug.join('/')}`}
-          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+      <SectionHeading
+        eyebrow="Continue learning"
+        title="Pick up your momentum"
+        description="The shortest path back into the atlas, based on what you have already opened."
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.9fr] gap-4 mb-6">
+        <div
+          className="rounded-2xl border p-5"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
-          <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--accent)' }}>
-            Today in Atlas
+          <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+            <Play size={12} />
+            Resume your run
           </div>
-          <div className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>{featuredDoc.title}</div>
-          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{featuredDoc.excerpt}</div>
-        </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {recentSlug ? (
+              <Link
+                href={`/${recentSlug.slug}`}
+                className="rounded-xl border px-4 py-4 transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Continue where you left off</div>
+                <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{recentSlug.title}</div>
+              </Link>
+            ) : (
+              <Link
+                href={GUIDED_PATHS[0].href}
+                className="rounded-xl border px-4 py-4 transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Start with a guided path</div>
+                <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{GUIDED_PATHS[0].desc}</div>
+              </Link>
+            )}
+
+            {oldBookmark ? (
+              <Link
+                href={oldBookmark.href}
+                className="rounded-xl border px-4 py-4 transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Revisit a saved tough one</div>
+                <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{oldBookmark.title}</div>
+              </Link>
+            ) : (
+              <div
+                className="rounded-xl border px-4 py-4"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Build a comeback pile</div>
+                <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
+                  Bookmark a few tricky reads and they will show up here for a cleaner next session.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         <div
           className="rounded-2xl border p-5"
@@ -280,18 +326,78 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-4 mb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4 mb-10">
+        <div
+          className="rounded-2xl border p-5"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+            <Compass size={12} />
+            Quick wins
+          </div>
+          <div className="space-y-2">
+            {quickWins.map(doc => (
+              <Link
+                key={doc.href}
+                href={doc.href}
+                className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)', color: 'var(--fg)' }}
+              >
+                <span className="truncate pr-3">{doc.title}</span>
+                <span className="shrink-0 text-[10px]" style={{ color: 'var(--muted)' }}>
+                  {Math.max(1, Math.ceil(doc.wordCount / 250))} min
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div
+          className="rounded-2xl border p-5"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+            Weak spots
+          </div>
+          <div className="space-y-3">
+            {weakestSections.length > 0 ? weakestSections.map(section => (
+              <Link
+                key={section.slug}
+                href={`/${section.slug}`}
+                className="block rounded-xl border px-3 py-3 transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="mb-1 text-sm font-semibold" style={{ color: 'var(--fg)' }}>{section.title}</div>
+                <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                  {section.visited}/{section.total} pages visited
+                </div>
+              </Link>
+            )) : (
+              <div className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
+                Start a second topic and this turns into a catch-up list instead of just a stats panel.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <SectionHeading
+        eyebrow="Discover"
+        title="Find something worth opening"
+        description="A smaller, more intentional set of ways to explore instead of one long homepage feed."
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 mb-10">
         <Link
-          href={`/${surpriseDoc.slug.join('/')}`}
+          href={`/${featuredDoc.slug.join('/')}`}
           className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
-            <Dice5 size={12} />
-            Surprise Pick
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--accent)' }}>
+            Today in Atlas
           </div>
-          <div className="text-base font-semibold" style={{ color: 'var(--fg)' }}>{surpriseDoc.title}</div>
-          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{surpriseDoc.excerpt}</div>
+          <div className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>{featuredDoc.title}</div>
+          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{featuredDoc.excerpt}</div>
         </Link>
 
         <div
@@ -316,129 +422,74 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1fr] gap-4 mb-10">
-        <div
-          className="rounded-2xl border p-5"
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4 mb-10">
+        <Link
+          href={`/${surpriseDoc.slug.join('/')}`}
+          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
-          <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-            <Compass size={12} />
-            Quick Wins
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+            <Dice5 size={12} />
+            Surprise Pick
           </div>
-          <div className="space-y-2">
-            {quickWins.map(doc => (
-              <Link
-                key={doc.href}
-                href={doc.href}
-                className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition-colors hover:bg-[var(--sidebar-hover)]"
-                style={{ borderColor: 'var(--border)', color: 'var(--fg)' }}
-              >
-                <span className="truncate pr-3">{doc.title}</span>
-                <span className="shrink-0 text-[10px]" style={{ color: 'var(--muted)' }}>
-                  {Math.max(1, Math.ceil(doc.wordCount / 250))} min
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
+          <div className="text-base font-semibold" style={{ color: 'var(--fg)' }}>{surpriseDoc.title}</div>
+          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{surpriseDoc.excerpt}</div>
+        </Link>
 
-        <div
-          className="rounded-2xl border p-5"
-          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-        >
-          <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-            Weak Spots
-          </div>
-          <div className="space-y-3">
-            {weakestSections.length > 0 ? weakestSections.map(section => (
-              <Link
-                key={section.slug}
-                href={`/${section.slug}`}
-                className="block rounded-xl border px-3 py-3 transition-colors hover:bg-[var(--sidebar-hover)]"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                <div className="mb-1 text-sm font-semibold" style={{ color: 'var(--fg)' }}>{section.title}</div>
-                <div className="text-xs" style={{ color: 'var(--muted)' }}>
-                  {section.visited}/{section.total} pages visited
-                </div>
-              </Link>
-            )) : (
-              <div className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
-                Start a second topic and this will turn into a personal catch-up list.
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div
-          className="rounded-2xl border p-5"
-          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-        >
-          <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
-            Revisit Later
-          </div>
-          {oldBookmark ? (
-            <Link
-              href={oldBookmark.href}
-              className="block rounded-xl border px-3 py-3 transition-colors hover:bg-[var(--sidebar-hover)]"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{oldBookmark.title}</div>
-              <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{oldBookmark.excerpt}</div>
-            </Link>
-          ) : (
-            <div className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
-              Bookmark a few tricky reads and this becomes your comeback pile.
+        <div className="grid grid-cols-1 gap-4">
+          <div className="rounded-2xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+            <div className="mb-3 flex items-center gap-2">
+              <ArrowRightLeft size={14} style={{ color: 'var(--accent)' }} />
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
+                Compare & Decide
+              </h2>
             </div>
-          )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {compareDocs.slice(0, 2).map(doc => (
+                <Link
+                  key={doc.href}
+                  href={doc.href}
+                  className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                >
+                  <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{doc.title}</div>
+                  <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
+                    Perfect when you want trade-offs, not just definitions.
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles size={14} style={{ color: 'var(--accent)' }} />
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
+                Guided Starts
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {GUIDED_PATHS.map(path => (
+                <Link
+                  key={path.title}
+                  href={path.href}
+                  className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                >
+                  <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{path.title}</div>
+                  <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{path.desc}</div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="mb-10">
-        <div className="mb-3 flex items-center gap-2">
-          <ArrowRightLeft size={14} style={{ color: 'var(--accent)' }} />
-          <h2 className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
-            Compare & Decide
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {compareDocs.map(doc => (
-            <Link
-              key={doc.href}
-              href={doc.href}
-              className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
-              style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-            >
-              <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{doc.title}</div>
-              <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
-                Perfect when you want trade-offs, not just definitions.
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-10">
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles size={14} style={{ color: 'var(--accent)' }} />
-          <h2 className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
-            Guided Starts
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {GUIDED_PATHS.map(path => (
-            <Link
-              key={path.title}
-              href={path.href}
-              className="rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
-              style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-            >
-              <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{path.title}</div>
-              <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{path.desc}</div>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <SectionHeading
+        eyebrow="Explore topics"
+        title="Browse the atlas map"
+        description="Once you know what mode you are in, the topic grid should be the only broad menu you need."
+      />
 
       {/* ── Section grid ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -548,6 +599,30 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="mb-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--accent)' }}>
+        {eyebrow}
+      </div>
+      <h2 className="mt-1 text-xl font-semibold" style={{ color: 'var(--fg)' }}>
+        {title}
+      </h2>
+      <p className="mt-1 text-sm max-w-2xl" style={{ color: 'var(--muted)' }}>
+        {description}
+      </p>
     </div>
   );
 }
