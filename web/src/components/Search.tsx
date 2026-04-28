@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search as SearchIcon, X, ArrowRight, Clock, TrendingUp, Shuffle, Heart, Layers3 } from 'lucide-react';
+import { Search as SearchIcon, X, ArrowRight, Clock, TrendingUp, Shuffle, Heart, Layers3, Brain, Server, Bot, Wrench, FileText } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import type { SearchItem } from '@/lib/docs';
-import { getBookmarks } from '@/lib/progress';
+import { getBookmarks, toggleBookmark } from '@/lib/progress';
 
 interface Props {
   index: SearchItem[];
@@ -16,6 +16,17 @@ interface Props {
 
 const RECENT_KEY = 'niprep_searches';
 const SUGGESTED = ['event loop', 'promises', 'TypeScript generics', 'system design', 'SQL joins', 'Docker', 'JWT', 'SOLID'];
+const SECTION_FILTERS = [
+  { label: 'AI', value: 'ai', icon: Bot },
+  { label: 'Node', value: 'node', icon: Server },
+  { label: 'React', value: 'react', icon: Brain },
+  { label: 'Engineering', value: 'engineering', icon: Wrench },
+];
+const KIND_FILTERS: Array<{ label: string; value: SearchItem['kind']; icon: typeof FileText }> = [
+  { label: 'Guides', value: 'guide', icon: FileText },
+  { label: 'Interview', value: 'interview', icon: Layers3 },
+  { label: 'Cheatsheets', value: 'cheatsheet', icon: Heart },
+];
 
 function loadRecentSearches(): string[] {
   try {
@@ -184,6 +195,33 @@ export default function Search({ index, onClose }: Props) {
     router.push('/' + firstBookmark);
   }, [bookmarks, handleClose, router]);
 
+  const applyFilter = useCallback((fragment: string) => {
+    setQuery(current => {
+      const parsed = parseQuery(current);
+      const pieces = [parsed.text].filter(Boolean);
+      if (fragment.startsWith('section:')) {
+        if (parsed.kind) pieces.push(`kind:${parsed.kind}`);
+        pieces.push(fragment);
+      } else if (fragment.startsWith('kind:')) {
+        if (parsed.section) pieces.push(`section:${parsed.section}`);
+        pieces.push(fragment);
+      } else {
+        pieces.push(fragment);
+      }
+      return pieces.join(' ').trim();
+    });
+  }, []);
+
+  const toggleResultBookmark = useCallback((slug: string, e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const saved = toggleBookmark(slug);
+    setBookmarks(current => {
+      const next = saved ? [slug, ...current.filter(entry => entry !== slug)] : current.filter(entry => entry !== slug);
+      return next.slice(0, 50);
+    });
+  }, []);
+
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') { handleClose(); return; }
@@ -244,6 +282,51 @@ export default function Search({ index, onClose }: Props) {
           </button>
         </div>
 
+        <div className="px-4 py-2 border-b space-y-2" style={{ borderColor: 'var(--border)' }}>
+          <div className="flex flex-wrap gap-2">
+            {SECTION_FILTERS.map(filter => {
+              const Icon = filter.icon;
+              const active = parseQuery(query).section === filter.value;
+              return (
+                <button
+                  key={filter.value}
+                  onClick={() => applyFilter(`section:${filter.value}`)}
+                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors hover:bg-[var(--sidebar-hover)]"
+                  style={{
+                    borderColor: active ? 'var(--accent)' : 'var(--border)',
+                    backgroundColor: active ? 'var(--sidebar-active)' : 'transparent',
+                    color: active ? 'var(--sidebar-active-text)' : 'var(--muted)',
+                  }}
+                >
+                  <Icon size={11} />
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {KIND_FILTERS.map(filter => {
+              const Icon = filter.icon;
+              const active = parseQuery(query).kind === filter.value;
+              return (
+                <button
+                  key={filter.value}
+                  onClick={() => applyFilter(`kind:${filter.value}`)}
+                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors hover:bg-[var(--sidebar-hover)]"
+                  style={{
+                    borderColor: active ? 'var(--accent)' : 'var(--border)',
+                    backgroundColor: active ? 'var(--sidebar-active)' : 'transparent',
+                    color: active ? 'var(--sidebar-active-text)' : 'var(--muted)',
+                  }}
+                >
+                  <Icon size={11} />
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Results */}
         {results.length > 0 ? (
           <>
@@ -288,6 +371,31 @@ export default function Search({ index, onClose }: Props) {
                           <Highlight text={item.excerpt} query={query} />
                         </div>
                       )}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          onClick={e => toggleResultBookmark(item.slug.join('/'), e)}
+                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
+                          style={{
+                            borderColor: 'var(--border)',
+                            backgroundColor: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active)' : 'transparent',
+                            color: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active-text)' : 'var(--muted)',
+                          }}
+                        >
+                          <Heart size={10} fill={bookmarks.includes(item.slug.join('/')) ? 'currentColor' : 'none'} />
+                          {bookmarks.includes(item.slug.join('/')) ? 'Saved' : 'Save'}
+                        </button>
+                        <button
+                          onClick={e => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            applyFilter(`section:${item.section.toLowerCase()}`);
+                          }}
+                          className="rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
+                          style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
+                        >
+                          More {item.section}
+                        </button>
+                      </div>
                     </div>
                     <ArrowRight size={13} className="shrink-0 mt-1" style={{ color: 'var(--muted)' }} />
                   </Link>
@@ -402,7 +510,7 @@ export default function Search({ index, onClose }: Props) {
           <span><kbd className="kbd">↑↓</kbd> navigate</span>
           <span><kbd className="kbd">↵</kbd> open</span>
           <span><kbd className="kbd">esc</kbd> close</span>
-          <span><kbd className="kbd">section:</kbd> filter</span>
+          <span><kbd className="kbd">section:</kbd> or chips</span>
         </div>
       </div>
     </div>
