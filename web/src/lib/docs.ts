@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { inferDifficulty, inferDocSkills, type Difficulty } from './learning';
 
 // Absolute path to the markdown content directory
 const DOCS_ROOT = path.join(process.cwd(), '..', 'docs');
@@ -40,6 +41,8 @@ export interface DocSummary {
   excerpt: string;
   wordCount: number;
   kind: 'cheatsheet' | 'interview' | 'guide';
+  skills: string[];
+  difficulty: Difficulty;
 }
 
 const ACRONYMS: Record<string, string> = {
@@ -315,6 +318,8 @@ export function getDocSummaries(): DocSummary[] {
       excerpt: extractExcerpt(doc.content, 140),
       wordCount: getWordCount(doc.content),
       kind: getDocKind(slug),
+      skills: inferDocSkills(slug, doc.title),
+      difficulty: inferDifficulty(slug, getWordCount(doc.content)),
     };
   });
   return docSummariesCache;

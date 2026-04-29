@@ -1,12 +1,30 @@
+import { inferDocSkills } from './learning';
+
 const VISITED_KEY = 'niprep_visited';
 const RECENT_KEY  = 'niprep_recent';
 const BOOKMARKS_KEY = 'devatlas_bookmarks';
 const VISIT_DAYS_KEY = 'devatlas_visit_days';
+const SKILL_COUNTS_KEY = 'devatlas_skill_counts';
+const QUIZ_RESULTS_KEY = 'devatlas_quiz_results';
 
 export interface RecentPage {
   slug: string;   // e.g. "01-javascript-fundamentals/01-event-loop/01-event-loop-deep-dive"
   title: string;
   ts: number;
+}
+
+export interface MissedQuizQuestion {
+  id: string;
+  quizId: string;
+  prompt: string;
+  sourceHref: string;
+  sourceLabel: string;
+  section: string;
+  lastAnsweredAt: number;
+}
+
+interface QuizResultEntry extends MissedQuizQuestion {
+  correct: boolean;
 }
 
 function isoDay(ts: number): string {
@@ -46,6 +64,12 @@ export function recordVisit(slug: string[], title: string): void {
   if (!visitDays.includes(today)) {
     localStorage.setItem(VISIT_DAYS_KEY, JSON.stringify([...visitDays, today].sort()));
   }
+
+  const skillCounts = getSkillCounts();
+  for (const skill of inferDocSkills(slug, title)) {
+    skillCounts[skill] = (skillCounts[skill] ?? 0) + 1;
+  }
+  localStorage.setItem(SKILL_COUNTS_KEY, JSON.stringify(skillCounts));
 }
 
 /** How many pages in a given top-level section have been visited. */
@@ -116,4 +140,54 @@ export function getVisitStreak(): number {
   }
 
   return streak;
+}
+
+export function getSkillCounts(): Record<string, number> {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(SKILL_COUNTS_KEY) ?? '{}') as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+export function getTopSkills(limit = 4): Array<{ skill: string; count: number }> {
+  return Object.entries(getSkillCounts())
+    .map(([skill, count]) => ({ skill, count }))
+    .sort((a, b) => b.count - a.count || a.skill.localeCompare(b.skill))
+    .slice(0, limit);
+}
+
+function getQuizResultsMap(): Record<string, QuizResultEntry> {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(QUIZ_RESULTS_KEY) ?? '{}') as Record<string, QuizResultEntry>;
+  } catch {
+    return {};
+  }
+}
+
+export function recordQuizAnswer(entry: {
+  id: string;
+  quizId: string;
+  prompt: string;
+  sourceHref: string;
+  sourceLabel: string;
+  section: string;
+  correct: boolean;
+}): void {
+  if (typeof window === 'undefined') return;
+  const results = getQuizResultsMap();
+  results[entry.id] = {
+    ...entry,
+    lastAnsweredAt: Date.now(),
+  };
+  localStorage.setItem(QUIZ_RESULTS_KEY, JSON.stringify(results));
+}
+
+export function getMissedQuizQuestions(limit = 12): MissedQuizQuestion[] {
+  return Object.values(getQuizResultsMap())
+    .filter(entry => !entry.correct)
+    .sort((a, b) => b.lastAnsweredAt - a.lastAnsweredAt)
+    .slice(0, limit);
 }

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import gsap from 'gsap';
 import Image from 'next/image';
-import { ChevronRight, Search, ArrowLeft, Map, ExternalLink, Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, FileText, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Search, ArrowLeft, Map, ExternalLink, Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, FileText, RotateCcw, type LucideIcon } from 'lucide-react';
 import type { NavItem } from '@/lib/docs';
 import { getRecent } from '@/lib/progress';
 import ThemeToggle from './ThemeToggle';
@@ -97,6 +97,19 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
       >
         <Map size={12} />
         <span className="flex-1 text-left">My Pathways</span>
+      </Link>
+
+      <Link
+        href="/review"
+        className="mx-2.5 mt-1.5 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-all hover:bg-[var(--sidebar-hover)]"
+        style={{
+          color: pathname === '/review' ? 'var(--sidebar-active-text)' : 'var(--muted)',
+          backgroundColor: pathname === '/review' ? 'var(--sidebar-active)' : 'transparent',
+          border: '1px solid var(--sidebar-border)',
+        }}
+      >
+        <RotateCcw size={12} />
+        <span className="flex-1 text-left">Review Mode</span>
       </Link>
 
       {activeSection ? (
