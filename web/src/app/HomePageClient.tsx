@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { useRef, useState, useLayoutEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, Compass, ArrowRightLeft, type LucideIcon } from 'lucide-react';
-import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak, getVisitedSet, getBookmarks } from '@/lib/progress';
+import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, Compass, ArrowRightLeft, RotateCcw, type LucideIcon } from 'lucide-react';
+import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak, getVisitedSet, getBookmarks, getTopSkills, getMissedQuizQuestions } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
 import RoughBorder from '@/components/RoughBorder';
 import type { DocSummary } from '@/lib/docs';
@@ -118,6 +118,8 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
   const [surpriseDoc, setSurpriseDoc] = useState<DocSummary>(initialSurpriseDoc);
   const [quickWins, setQuickWins] = useState<DocSummary[]>([]);
   const [oldBookmark, setOldBookmark] = useState<DocSummary | null>(null);
+  const [topSkills, setTopSkills] = useState<Array<{ skill: string; count: number }>>([]);
+  const [missedCount, setMissedCount] = useState(0);
 
   useLayoutEffect(() => {
     const counts: Record<string, number> = {};
@@ -145,6 +147,8 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
       ? docs.find(doc => doc.slug.join('/') === bookmarkSlugs[bookmarkSlugs.length - 1]) ?? null
       : null;
     setOldBookmark(bookmarkedDoc);
+    setTopSkills(getTopSkills(4));
+    setMissedCount(getMissedQuizQuestions().length);
   }, [docs]);
 
   useGSAP(() => {
@@ -381,6 +385,49 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
         </div>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4 mb-10">
+        <Link
+          href="/review"
+          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+            <RotateCcw size={12} />
+            Review mode
+          </div>
+          <div className="text-base font-semibold" style={{ color: 'var(--fg)' }}>
+            Retry missed questions and saved reads
+          </div>
+          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
+            {missedCount > 0 ? `${missedCount} missed quiz cards are waiting for a comeback run.` : 'Your quizzes, bookmarks, and weak spots now have a single return surface.'}
+          </div>
+        </Link>
+
+        <div
+          className="rounded-2xl border p-5"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+        >
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+            Skill momentum
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {topSkills.length > 0 ? topSkills.map(skill => (
+              <span
+                key={skill.skill}
+                className="rounded-full border px-3 py-1.5 text-xs font-medium"
+                style={{ borderColor: 'var(--border)', color: 'var(--fg)', backgroundColor: 'var(--bg)' }}
+              >
+                {formatSkill(skill.skill)} · {skill.count}
+              </span>
+            )) : (
+              <div className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
+                Read a few docs and the atlas starts surfacing the skills you are really compounding.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <SectionHeading
         eyebrow="Discover"
         title="Find something worth opening"
@@ -601,6 +648,13 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
       </div>
     </div>
   );
+}
+
+function formatSkill(skill: string) {
+  return skill
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function SectionHeading({

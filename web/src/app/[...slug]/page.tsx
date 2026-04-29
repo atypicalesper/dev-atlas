@@ -12,8 +12,10 @@ import NotebookProseDecor from '@/components/NotebookProseDecor';
 import AddToPathwayButton from '@/components/AddToPathwayButton';
 import FavoriteButton from '@/components/FavoriteButton';
 import LearningToolkit from '@/components/LearningToolkit';
+import PredictTheOutput from '@/components/PredictTheOutput';
 import SectionQuiz from '@/components/SectionQuiz';
 import { getDocQuiz, getSectionQuiz } from '@/lib/quizzes';
+import { getPredictBlocks } from '@/lib/predict';
 import { Clock, FolderOpen, ChevronRight, Zap } from 'lucide-react';
 
 interface PageProps {
@@ -194,6 +196,7 @@ export default async function DocPage({ params }: PageProps) {
   const practiceDoc = getPracticeDoc(slug);
   const compareDoc = getCompareDoc(slug);
   const docQuiz = getDocQuiz(slug);
+  const predictBlocks = getPredictBlocks(slug);
   const prevHref = prev ? '/' + prev.slug.join('/') : undefined;
   const nextHref = next ? '/' + next.slug.join('/') : undefined;
 
@@ -260,6 +263,7 @@ export default async function DocPage({ params }: PageProps) {
           {/* Markdown content */}
           <MarkdownContent markdown={doc.content} />
           <NotebookProseDecor />
+          <PredictTheOutput blocks={predictBlocks} />
           {docQuiz && <SectionQuiz quiz={docQuiz} />}
           <LearningToolkit
             title={doc.title}

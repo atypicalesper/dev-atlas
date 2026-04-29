@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Brain, CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
 import type { QuizPack } from '@/lib/quizzes';
+import { recordQuizAnswer } from '@/lib/progress';
 
 interface Props {
   quiz: QuizPack;
@@ -81,7 +82,18 @@ export default function SectionQuiz({ quiz }: Props) {
                   return (
                     <button
                       key={option.id}
-                      onClick={() => setAnswers(current => ({ ...current, [index]: option.id }))}
+                      onClick={() => {
+                        setAnswers(current => ({ ...current, [index]: option.id }));
+                        recordQuizAnswer({
+                          id: `${question.sourceHref}::${index}`,
+                          quizId: quiz.title,
+                          prompt: question.prompt,
+                          sourceHref: question.sourceHref,
+                          sourceLabel: question.sourceLabel,
+                          section: quiz.section,
+                          correct: option.id === question.correctId,
+                        });
+                      }}
                       className="rounded-xl border px-3 py-3 text-left text-sm transition-colors hover:bg-[var(--sidebar-hover)]"
                       style={{
                         borderColor: showCorrect ? 'var(--success)' : showWrong ? '#ef4444' : 'var(--border)',
