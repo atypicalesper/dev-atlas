@@ -6,7 +6,7 @@ import { useRef, useState, useLayoutEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, Compass, ArrowRightLeft, RotateCcw, type LucideIcon } from 'lucide-react';
-import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak, getVisitedSet, getBookmarks, getTopSkills, getMissedQuizQuestions } from '@/lib/progress';
+import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak, getVisitedSet, getBookmarks, getTopSkills, getMissedQuizQuestions, getInProgressDocs, type InProgressDoc } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
 import RoughBorder from '@/components/RoughBorder';
 import type { DocSummary } from '@/lib/docs';
@@ -120,6 +120,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
   const [oldBookmark, setOldBookmark] = useState<DocSummary | null>(null);
   const [topSkills, setTopSkills] = useState<Array<{ skill: string; count: number }>>([]);
   const [missedCount, setMissedCount] = useState(0);
+  const [inProgressDocs, setInProgressDocs] = useState<InProgressDoc[]>([]);
 
   useLayoutEffect(() => {
     const counts: Record<string, number> = {};
@@ -149,6 +150,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
     setOldBookmark(bookmarkedDoc);
     setTopSkills(getTopSkills(4));
     setMissedCount(getMissedQuizQuestions().length);
+    setInProgressDocs(getInProgressDocs(2));
   }, [docs]);
 
   useGSAP(() => {
@@ -272,7 +274,28 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
             Resume your run
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {recentSlug ? (
+            {inProgressDocs.length > 0 ? (
+              inProgressDocs.map(doc => (
+                <Link
+                  key={doc.slug}
+                  href={`/${doc.slug}`}
+                  className="rounded-xl border px-4 py-4 transition-colors hover:bg-[var(--sidebar-hover)]"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Continue where you left off</div>
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: 'var(--accent)' }}>{doc.pct}%</span>
+                  </div>
+                  <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{doc.title}</div>
+                  <div className="mt-3 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${doc.pct}%`, backgroundColor: 'var(--accent)', transition: 'width 0.5s ease' }}
+                    />
+                  </div>
+                </Link>
+              ))
+            ) : recentSlug ? (
               <Link
                 href={`/${recentSlug.slug}`}
                 className="rounded-xl border px-4 py-4 transition-colors hover:bg-[var(--sidebar-hover)]"
@@ -292,7 +315,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
               </Link>
             )}
 
-            {oldBookmark ? (
+            {inProgressDocs.length < 2 && (oldBookmark ? (
               <Link
                 href={oldBookmark.href}
                 className="rounded-xl border px-4 py-4 transition-colors hover:bg-[var(--sidebar-hover)]"
@@ -311,7 +334,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
                   Bookmark a few tricky reads and they will show up here for a cleaner next session.
                 </div>
               </div>
-            )}
+            ))}
           </div>
         </div>
 

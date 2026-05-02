@@ -6,6 +6,7 @@ const BOOKMARKS_KEY = 'devatlas_bookmarks';
 const VISIT_DAYS_KEY = 'devatlas_visit_days';
 const SKILL_COUNTS_KEY = 'devatlas_skill_counts';
 const QUIZ_RESULTS_KEY = 'devatlas_quiz_results';
+const READ_PROGRESS_KEY = 'devatlas_read_progress';
 
 export interface RecentPage {
   slug: string;   // e.g. "01-javascript-fundamentals/01-event-loop/01-event-loop-deep-dive"
@@ -190,4 +191,57 @@ export function getMissedQuizQuestions(limit = 12): MissedQuizQuestion[] {
     .filter(entry => !entry.correct)
     .sort((a, b) => b.lastAnsweredAt - a.lastAnsweredAt)
     .slice(0, limit);
+}
+
+interface ReadProgressEntry {
+  pct: number;
+  updatedAt: number;
+}
+
+function getReadProgressMap(): Record<string, ReadProgressEntry> {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(READ_PROGRESS_KEY) ?? '{}') as Record<string, ReadProgressEntry>;
+  } catch {
+    return {};
+  }
+}
+
+/** Persist max scroll percentage reached on a doc. Only updates when pct grows. */
+export function recordReadProgress(slugKey: string, pct: number): void {
+  if (typeof window === 'undefined') return;
+  const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+  const map = getReadProgressMap();
+  const prev = map[slugKey]?.pct ?? 0;
+  if (clamped <= prev && map[slugKey]) return;
+  map[slugKey] = { pct: Math.max(prev, clamped), updatedAt: Date.now() };
+  localStorage.setItem(READ_PROGRESS_KEY, JSON.stringify(map));
+}
+
+export function getDocProgressPct(slugKey: string): number {
+  if (typeof window === 'undefined') return 0;
+  return getReadProgressMap()[slugKey]?.pct ?? 0;
+}
+
+export interface InProgressDoc {
+  slug: string;
+  title: string;
+  pct: number;
+  updatedAt: number;
+}
+
+/** Recently visited docs that are partially read (5–94% scrolled), most recent first. */
+export function getInProgressDocs(limit = 4): InProgressDoc[] {
+  if (typeof window === 'undefined') return [];
+  const map = getReadProgressMap();
+  const recents = getRecent();
+  const out: InProgressDoc[] = [];
+  for (const recent of recents) {
+    const entry = map[recent.slug];
+    if (!entry) continue;
+    if (entry.pct < 5 || entry.pct >= 95) continue;
+    out.push({ slug: recent.slug, title: recent.title, pct: entry.pct, updatedAt: entry.updatedAt });
+    if (out.length >= limit) break;
+  }
+  return out;
 }

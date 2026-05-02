@@ -231,7 +231,7 @@ export default async function DocPage({ params }: PageProps) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <ReadingProgress />
+      <ReadingProgress slug={slug} />
       <DocPageClient
         slug={slug}
         title={doc.title}
@@ -263,7 +263,12 @@ export default async function DocPage({ params }: PageProps) {
           {/* Markdown content */}
           <MarkdownContent markdown={doc.content} />
           <NotebookProseDecor />
-          <PredictTheOutput blocks={predictBlocks} />
+          <PredictTheOutput
+            blocks={predictBlocks}
+            slug={slug}
+            docTitle={doc.title}
+            section={slug[0] ? humanize(slug[0]) : ''}
+          />
           {docQuiz && <SectionQuiz quiz={docQuiz} />}
           <LearningToolkit
             title={doc.title}

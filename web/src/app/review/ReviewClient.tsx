@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Brain, CircleAlert, Flame, Heart, RotateCcw, Sparkles, Target } from 'lucide-react';
+import { Brain, CalendarClock, CircleAlert, Flame, Heart, RotateCcw, Sparkles, Target } from 'lucide-react';
 import type { DocSummary } from '@/lib/docs';
 import { getBookmarks, getMissedQuizQuestions, getRecent, getSkillCounts, getTopSkills, getVisitedCountBySection, getVisitStreak } from '@/lib/progress';
+import { describeInterval, getDueCards, getSrsStats, type SrsCardState, type SrsStats } from '@/lib/srs';
 
 interface Props {
   docs: DocSummary[];
@@ -26,6 +27,8 @@ export default function ReviewClient({ docs, pageCounts }: Props) {
   const [skillCounts, setSkillCounts] = useState<Record<string, number>>({});
   const [recents, setRecents] = useState<DocSummary[]>([]);
   const [weakSections, setWeakSections] = useState<Array<{ slug: string; title: string; pct: number; visited: number; total: number }>>([]);
+  const [dueCards, setDueCards] = useState<SrsCardState[]>([]);
+  const [srsStats, setSrsStats] = useState<SrsStats>({ total: 0, due: 0, learning: 0, mature: 0, nextDueAt: null });
 
   useEffect(() => {
     const missedEntries = getMissedQuizQuestions().map(entry => ({
@@ -59,6 +62,9 @@ export default function ReviewClient({ docs, pageCounts }: Props) {
       .sort((a, b) => a.pct - b.pct)
       .slice(0, 4);
     setWeakSections(sections);
+
+    setDueCards(getDueCards(Date.now(), 12));
+    setSrsStats(getSrsStats());
   }, [docs, pageCounts]);
 
   const quickSession = useMemo(() => {
@@ -93,6 +99,51 @@ export default function ReviewClient({ docs, pageCounts }: Props) {
         </p>
       </div>
 
+      <section className="mb-8 rounded-3xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+            <CalendarClock size={12} />
+            Due for spaced review
+          </div>
+          <div className="text-xs" style={{ color: 'var(--muted)' }}>
+            {srsStats.total > 0
+              ? `${srsStats.due} due · ${srsStats.learning} learning · ${srsStats.mature} mature`
+              : 'No cards yet'}
+          </div>
+        </div>
+        {dueCards.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {dueCards.map(card => (
+              <Link
+                key={card.id}
+                href={card.sourceHref}
+                className="block rounded-2xl border px-4 py-4 transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div className="flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+                  <span>{card.section} · {card.kind === 'quiz' ? 'Quiz' : 'Predict'}</span>
+                  <span style={{ color: 'var(--muted)' }}>{describeInterval(card)}</span>
+                </div>
+                <div className="mt-2 text-sm font-semibold leading-snug" style={{ color: 'var(--fg)' }}>
+                  {card.prompt}
+                </div>
+                <div className="mt-1 text-xs" style={{ color: 'var(--muted)' }}>
+                  Review in {card.sourceLabel}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
+            {srsStats.total === 0
+              ? 'Take a quiz or grade yourself on a Predict-the-Output block. Each answer schedules a card here for spaced practice.'
+              : srsStats.nextDueAt
+                ? `All caught up. Next card unlocks ${formatRelativeFromNow(srsStats.nextDueAt)}.`
+                : 'All caught up.'}
+          </div>
+        )}
+      </section>
+
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-4 mb-8">
         <div className="rounded-3xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
           <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
@@ -126,6 +177,7 @@ export default function ReviewClient({ docs, pageCounts }: Props) {
           </div>
           <div className="space-y-3">
             <Stat label="Day streak" value={String(streak)} icon={Flame} />
+            <Stat label="Cards due now" value={String(srsStats.due)} icon={CalendarClock} />
             <Stat label="Missed quiz cards" value={String(missed.length)} icon={CircleAlert} />
             <Stat label="Saved reads" value={String(bookmarks.length)} icon={Heart} />
           </div>
@@ -283,4 +335,16 @@ function formatSkill(skill: string) {
     .split('-')
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+function formatRelativeFromNow(ts: number): string {
+  const diff = ts - Date.now();
+  if (diff <= 0) return 'now';
+  const days = Math.round(diff / (24 * 60 * 60 * 1000));
+  if (days <= 0) {
+    const hours = Math.max(1, Math.round(diff / (60 * 60 * 1000)));
+    return `in ${hours}h`;
+  }
+  if (days === 1) return 'tomorrow';
+  return `in ${days}d`;
 }

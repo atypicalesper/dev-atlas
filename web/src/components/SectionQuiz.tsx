@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Brain, CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
 import type { QuizPack } from '@/lib/quizzes';
 import { recordQuizAnswer } from '@/lib/progress';
+import { recordSrsReview } from '@/lib/srs';
 
 interface Props {
   quiz: QuizPack;
@@ -12,6 +13,7 @@ interface Props {
 
 export default function SectionQuiz({ quiz }: Props) {
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const firstAttemptRef = useRef<Set<number>>(new Set());
   const answeredCount = Object.keys(answers).length;
   const allAnswered = answeredCount === quiz.questions.length;
 
@@ -84,15 +86,31 @@ export default function SectionQuiz({ quiz }: Props) {
                       key={option.id}
                       onClick={() => {
                         setAnswers(current => ({ ...current, [index]: option.id }));
+                        const cardId = `${question.sourceHref}::${index}`;
+                        const correct = option.id === question.correctId;
                         recordQuizAnswer({
-                          id: `${question.sourceHref}::${index}`,
+                          id: cardId,
                           quizId: quiz.title,
                           prompt: question.prompt,
                           sourceHref: question.sourceHref,
                           sourceLabel: question.sourceLabel,
                           section: quiz.section,
-                          correct: option.id === question.correctId,
+                          correct,
                         });
+                        if (!firstAttemptRef.current.has(index)) {
+                          firstAttemptRef.current.add(index);
+                          recordSrsReview(
+                            {
+                              id: cardId,
+                              kind: 'quiz',
+                              prompt: question.prompt,
+                              sourceHref: question.sourceHref,
+                              sourceLabel: question.sourceLabel,
+                              section: quiz.section,
+                            },
+                            correct ? 4 : 2,
+                          );
+                        }
                       }}
                       className="rounded-xl border px-3 py-3 text-left text-sm transition-colors hover:bg-[var(--sidebar-hover)]"
                       style={{
@@ -134,7 +152,10 @@ export default function SectionQuiz({ quiz }: Props) {
           These questions are derived from the section’s current atlas content and link back to the underlying docs.
         </div>
         <button
-          onClick={() => setAnswers({})}
+          onClick={() => {
+            setAnswers({});
+            firstAttemptRef.current = new Set();
+          }}
           className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-colors hover:bg-[var(--sidebar-hover)]"
           style={{ borderColor: 'var(--border)', color: 'var(--fg)' }}
         >
