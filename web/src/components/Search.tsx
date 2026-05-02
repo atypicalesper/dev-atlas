@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search as SearchIcon, X, ArrowRight, Clock, TrendingUp, Shuffle, Heart, Layers3, Brain, Server, Bot, Wrench, FileText } from 'lucide-react';
+import { Search as SearchIcon, X, ArrowRight, Clock, Hash, TrendingUp, Shuffle, Heart, Layers3, Brain, Server, Bot, Wrench, FileText } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import type { SearchItem } from '@/lib/docs';
@@ -72,6 +72,11 @@ function parseQuery(raw: string): {
   return { text: textTokens.join(' ').toLowerCase().trim(), section, kind };
 }
 
+function itemHref(item: SearchItem): string {
+  const base = '/' + item.slug.join('/');
+  return item.headingId ? `${base}#${item.headingId}` : base;
+}
+
 function matchItems(query: string, items: SearchItem[]): SearchItem[] {
   const parsed = parseQuery(query);
   const q = parsed.text;
@@ -83,6 +88,7 @@ function matchItems(query: string, items: SearchItem[]): SearchItem[] {
     const section = item.section.toLowerCase();
     const excerpt = item.excerpt.toLowerCase();
     const path = item.path.toLowerCase();
+    const heading = (item.headingText ?? '').toLowerCase();
 
     let points = 0;
     if (parsed.section) {
@@ -93,33 +99,57 @@ function matchItems(query: string, items: SearchItem[]): SearchItem[] {
       if (item.kind === parsed.kind) points += 40;
       else return 0;
     }
-    if (title === q) points += 140;
-    if (title.startsWith(q)) points += 90;
-    if (title.includes(q)) points += 60;
-    if (path.includes(q)) points += 45;
-    if (section.includes(q)) points += 20;
-    if (excerpt.includes(q)) points += 15;
 
-    for (const token of tokens) {
-      if (title.includes(token)) points += 18;
-      if (path.includes(token)) points += 12;
-      if (section.includes(token)) points += 8;
-      if (excerpt.includes(token)) points += 4;
-    }
-
-    if (tokens.every(token => title.includes(token) || path.includes(token) || excerpt.includes(token))) {
-      points += 24;
+    if (item.headingText) {
+      // Heading entries: score mainly on the heading text match
+      if (heading === q) points += 160;
+      else if (heading.startsWith(q)) points += 100;
+      else if (heading.includes(q)) points += 70;
+      for (const token of tokens) {
+        if (heading.includes(token)) points += 20;
+      }
+      if (title.includes(q)) points += 20;
+      // Slightly penalise heading items so exact title matches surface first
+      points = Math.max(0, points - 5);
+    } else {
+      if (title === q) points += 140;
+      if (title.startsWith(q)) points += 90;
+      if (title.includes(q)) points += 60;
+      if (path.includes(q)) points += 45;
+      if (section.includes(q)) points += 20;
+      if (excerpt.includes(q)) points += 15;
+      for (const token of tokens) {
+        if (title.includes(token)) points += 18;
+        if (path.includes(token)) points += 12;
+        if (section.includes(token)) points += 8;
+        if (excerpt.includes(token)) points += 4;
+      }
+      if (tokens.every(token => title.includes(token) || path.includes(token) || excerpt.includes(token))) {
+        points += 24;
+      }
     }
 
     return points;
   }
 
-  return items
+  // Deduplicate: for heading items, only show if score > doc-level score for same slug
+  const scored = items
     .map(item => ({ item, score: score(item) }))
     .filter(entry => entry.score > 0)
-    .sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title))
-    .map(entry => entry.item)
-    .slice(0, 9);
+    .sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title));
+
+  // Cap at 10 results, at most 3 heading items
+  const out: SearchItem[] = [];
+  let headingCount = 0;
+  for (const { item } of scored) {
+    if (item.headingText) {
+      if (headingCount >= 3) continue;
+      headingCount++;
+    }
+    out.push(item);
+    if (out.length >= 10) break;
+  }
+  return out;
 }
 
 function Highlight({ text, query }: { text: string; query: string }) {
@@ -178,7 +208,7 @@ export default function Search({ index, onClose }: Props) {
     const item = results[selected];
     if (!item) return;
     handleClose(query);
-    router.push('/' + item.slug.join('/'));
+    router.push(itemHref(item));
   }, [results, selected, handleClose, query, router]);
 
   const openRandom = useCallback(() => {
@@ -338,64 +368,83 @@ export default function Search({ index, onClose }: Props) {
             </div>
             <ul className="py-1.5 max-h-[22rem] overflow-y-auto">
               {results.map((item, i) => (
-                <li key={item.slug.join('/')}>
+                <li key={item.headingId ? `${item.slug.join('/')}#${item.headingId}` : item.slug.join('/')}>
                   <Link
-                    href={'/' + item.slug.join('/')}
+                    href={itemHref(item)}
                     onClick={() => handleClose(query)}
                     onMouseEnter={() => setSelected(i)}
                     className="flex items-start gap-3 px-4 py-2.5 transition-colors"
                     style={{ backgroundColor: i === selected ? 'var(--sidebar-active)' : undefined }}
                   >
+                    {item.headingText && (
+                      <Hash size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--muted)' }} />
+                    )}
                     <div className="flex-1 min-w-0">
-                      <div
-                        className="text-sm font-medium leading-snug"
-                        style={{ color: i === selected ? 'var(--sidebar-active-text)' : 'var(--fg)' }}
-                      >
-                        <Highlight text={item.title} query={query} />
-                      </div>
-                      {item.section && (
-                        <div className="mt-0.5 flex items-center gap-2">
-                          <div className="text-xs" style={{ color: 'var(--muted)' }}>
-                            {item.path}
-                          </div>
-                          <span
-                            className="rounded-full px-1.5 py-0.5 text-[10px] uppercase"
-                            style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--sidebar-active-text)' }}
+                      {item.headingText ? (
+                        <>
+                          <div
+                            className="text-sm font-medium leading-snug"
+                            style={{ color: i === selected ? 'var(--sidebar-active-text)' : 'var(--fg)' }}
                           >
-                            {item.kind}
-                          </span>
-                        </div>
+                            <Highlight text={item.headingText} query={query} />
+                          </div>
+                          <div className="mt-0.5 text-xs" style={{ color: 'var(--muted)' }}>
+                            in {item.title} · {item.section}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div
+                            className="text-sm font-medium leading-snug"
+                            style={{ color: i === selected ? 'var(--sidebar-active-text)' : 'var(--fg)' }}
+                          >
+                            <Highlight text={item.title} query={query} />
+                          </div>
+                          {item.section && (
+                            <div className="mt-0.5 flex items-center gap-2">
+                              <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                                {item.path}
+                              </div>
+                              <span
+                                className="rounded-full px-1.5 py-0.5 text-[10px] uppercase"
+                                style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--sidebar-active-text)' }}
+                              >
+                                {item.kind}
+                              </span>
+                            </div>
+                          )}
+                          {item.excerpt && (
+                            <div className="text-xs mt-1 line-clamp-1" style={{ color: 'var(--muted)' }}>
+                              <Highlight text={item.excerpt} query={query} />
+                            </div>
+                          )}
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <button
+                              onClick={e => toggleResultBookmark(item.slug.join('/'), e)}
+                              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
+                              style={{
+                                borderColor: 'var(--border)',
+                                backgroundColor: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active)' : 'transparent',
+                                color: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active-text)' : 'var(--muted)',
+                              }}
+                            >
+                              <Heart size={10} fill={bookmarks.includes(item.slug.join('/')) ? 'currentColor' : 'none'} />
+                              {bookmarks.includes(item.slug.join('/')) ? 'Saved' : 'Save'}
+                            </button>
+                            <button
+                              onClick={e => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                applyFilter(`section:${item.section.toLowerCase()}`);
+                              }}
+                              className="rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
+                              style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
+                            >
+                              More {item.section}
+                            </button>
+                          </div>
+                        </>
                       )}
-                      {item.excerpt && (
-                        <div className="text-xs mt-1 line-clamp-1" style={{ color: 'var(--muted)' }}>
-                          <Highlight text={item.excerpt} query={query} />
-                        </div>
-                      )}
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <button
-                          onClick={e => toggleResultBookmark(item.slug.join('/'), e)}
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
-                          style={{
-                            borderColor: 'var(--border)',
-                            backgroundColor: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active)' : 'transparent',
-                            color: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active-text)' : 'var(--muted)',
-                          }}
-                        >
-                          <Heart size={10} fill={bookmarks.includes(item.slug.join('/')) ? 'currentColor' : 'none'} />
-                          {bookmarks.includes(item.slug.join('/')) ? 'Saved' : 'Save'}
-                        </button>
-                        <button
-                          onClick={e => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            applyFilter(`section:${item.section.toLowerCase()}`);
-                          }}
-                          className="rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
-                          style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
-                        >
-                          More {item.section}
-                        </button>
-                      </div>
                     </div>
                     <ArrowRight size={13} className="shrink-0 mt-1" style={{ color: 'var(--muted)' }} />
                   </Link>

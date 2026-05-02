@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { List } from 'lucide-react';
 import type { Heading } from '@/lib/docs';
+import { useNotebook } from '@/lib/notebook';
+import RoughBorder from './RoughBorder';
 
 interface Props {
   headings: Heading[];
@@ -11,6 +13,7 @@ interface Props {
 export default function TableOfContents({ headings }: Props) {
   const [active, setActive] = useState('');
   const [open, setOpen] = useState(false);
+  const { notebook } = useNotebook();
 
   useEffect(() => {
     if (headings.length === 0) return;
@@ -69,7 +72,14 @@ export default function TableOfContents({ headings }: Props) {
       )}
 
       <aside className="hidden lg:block w-48 shrink-0 self-start sticky top-8">
-        <nav>
+        <div
+          className="relative rounded-xl p-3"
+          style={{
+            backgroundColor: notebook ? 'var(--card-bg)' : 'transparent',
+            borderColor: notebook ? 'transparent' : undefined,
+          }}
+        >
+          {notebook && <RoughBorder roughness={1.4} strokeWidth={1.2} />}
           <p
             className="text-[11px] font-semibold uppercase tracking-wider mb-3"
             style={{ color: 'var(--muted)' }}
@@ -77,7 +87,7 @@ export default function TableOfContents({ headings }: Props) {
             On this page
           </p>
           <TocList headings={headings} active={active} />
-        </nav>
+        </div>
       </aside>
     </>
   );

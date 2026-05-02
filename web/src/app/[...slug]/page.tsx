@@ -2,7 +2,6 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getDocContent, getDirInfo, getPrevNext, getAllDocSlugs, getAllDirSlugs, extractHeadings, extractExcerpt, humanize, getRelatedDocs, getPracticeDoc, getCompareDoc } from '@/lib/docs';
-import type { NavItem } from '@/lib/docs';
 import MarkdownContent from '@/components/MarkdownContent';
 import TableOfContents from '@/components/TableOfContents';
 import ReadingProgress from '@/components/ReadingProgress';
@@ -14,6 +13,7 @@ import FavoriteButton from '@/components/FavoriteButton';
 import LearningToolkit from '@/components/LearningToolkit';
 import PredictTheOutput from '@/components/PredictTheOutput';
 import SectionQuiz from '@/components/SectionQuiz';
+import DirGrid from '@/components/DirGrid';
 import { getDocQuiz, getSectionQuiz } from '@/lib/quizzes';
 import { getPredictBlocks } from '@/lib/predict';
 import { Clock, FolderOpen, ChevronRight, Zap } from 'lucide-react';
@@ -36,11 +36,6 @@ function readingVibe(markdown: string): string {
   return 'Boss Battle';
 }
 
-/** Count total leaf-file descendants of a NavItem */
-function flatCount(item: NavItem): number {
-  if (!item.children) return 1;
-  return item.children.reduce((sum, c) => sum + flatCount(c), 0);
-}
 
 export async function generateStaticParams() {
   const fileSlugs = getAllDocSlugs();
@@ -126,64 +121,7 @@ export default async function DocPage({ params }: PageProps) {
 
         {sectionQuiz && <SectionQuiz quiz={sectionQuiz} />}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {dir.children.map((child, i) => {
-            const href = '/' + child.slug.join('/');
-            const stagger = { '--stagger': `${i * 60}ms` } as React.CSSProperties;
-            if (child.children) {
-              const count = flatCount(child);
-              // Subsection card
-              return (
-                <div
-                  key={href}
-                  className="dir-card rounded-xl border p-5"
-                  style={{ ...stagger, backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <Link
-                      href={href}
-                      className="font-semibold text-sm hover:text-indigo-400 transition-colors inline-flex items-center gap-1"
-                      style={{ color: 'var(--fg)' }}
-                    >
-                      {child.title}
-                      <ChevronRight size={13} style={{ color: 'var(--muted)' }} />
-                    </Link>
-                    <span
-                      className="text-[10px] font-medium px-1.5 py-0.5 rounded-md shrink-0 ml-2"
-                      style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--sidebar-active-text)' }}
-                    >
-                      {count} {count === 1 ? 'file' : 'files'}
-                    </span>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {child.children.map(gc => (
-                      <li key={gc.slug.join('/')}>
-                        <Link
-                          href={'/' + gc.slug.join('/')}
-                          className="text-xs hover:underline"
-                          style={{ color: 'var(--muted)' }}
-                        >
-                          {gc.title}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            }
-            // Direct file card
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="dir-card rounded-xl border p-5 block transition-all hover:-translate-y-1 hover:shadow-md group"
-                style={{ ...stagger, backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-              >
-                <span className="font-semibold text-sm group-hover:text-indigo-400 transition-colors" style={{ color: 'var(--fg)' }}>{child.title}</span>
-              </Link>
-            );
-          })}
-        </div>
+        <DirGrid items={dir.children} />
       </div>
     );
   }

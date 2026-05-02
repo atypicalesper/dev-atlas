@@ -25,6 +25,8 @@ export interface SearchItem {
   section: string;
   path: string;
   kind: 'cheatsheet' | 'interview' | 'guide';
+  headingId?: string;
+  headingText?: string;
 }
 
 export interface NavItem {
@@ -294,15 +296,32 @@ export function buildSearchIndex(): SearchItem[] {
   if (searchIndexCache) return searchIndexCache;
 
   const slugs = getAllDocSlugs();
-  searchIndexCache = slugs.map(slug => {
+  const items: SearchItem[] = [];
+
+  for (const slug of slugs) {
     const doc = getDocContent(slug)!;
     const section = slug[0] ? humanize(slug[0]) : '';
     const pathLabel = slug.map(part => humanize(part)).join(' / ');
     const excerpt = extractExcerpt(doc.content, 220);
     const kind = getDocKind(slug);
 
-    return { title: doc.title, slug, excerpt, section, path: pathLabel, kind };
-  });
+    items.push({ title: doc.title, slug, excerpt, section, path: pathLabel, kind });
+
+    for (const heading of extractHeadings(doc.content)) {
+      items.push({
+        title: doc.title,
+        slug,
+        excerpt: heading.text,
+        section,
+        path: pathLabel,
+        kind,
+        headingId: heading.id,
+        headingText: heading.text,
+      });
+    }
+  }
+
+  searchIndexCache = items;
   return searchIndexCache;
 }
 
