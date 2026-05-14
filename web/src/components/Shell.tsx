@@ -20,6 +20,7 @@ export default function Shell({ nav, searchIndex, children }: Props) {
   const [collapsed, setCollapsed] = useState(false);           // desktop collapse
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
+  const isSpecialPage = pathname === '/special';
 
   // Close mobile drawer on navigation
   useEffect(() => { setSidebarOpen(false); }, [pathname]);
@@ -53,6 +54,14 @@ export default function Shell({ nav, searchIndex, children }: Props) {
 
   return (
     <div className="flex min-h-screen">
+      {isSpecialPage ? (
+        <>
+          <main className="flex-1 min-w-0">{children}</main>
+          {searchOpen && <Search index={searchIndex} onClose={() => setSearchOpen(false)} />}
+          <KeyboardShortcuts />
+        </>
+      ) : (
+        <>
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
@@ -118,6 +127,8 @@ export default function Shell({ nav, searchIndex, children }: Props) {
 
       {searchOpen && <Search index={searchIndex} onClose={() => setSearchOpen(false)} />}
       <KeyboardShortcuts />
+        </>
+      )}
     </div>
   );
 }

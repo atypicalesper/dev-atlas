@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import gsap from 'gsap';
 import Image from 'next/image';
-import { ChevronRight, Search, ArrowLeft, Map, ExternalLink, Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, FileText, RotateCcw, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Search, ArrowLeft, Map, ExternalLink, Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, FileText, RotateCcw, Sparkles, Flame, Target, Zap, type LucideIcon } from 'lucide-react';
 import type { NavItem } from '@/lib/docs';
 import { getRecent } from '@/lib/progress';
 import ThemeToggle from './ThemeToggle';
@@ -33,6 +33,7 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLElement>(null);
   const [recentPages, setRecentPages] = useState<Array<{ slug: string; title: string }>>([]);
+  const isSpecialPage = pathname === '/special';
 
   // Detect which top-level section we're inside (null = home)
   const activeTopSlug = pathname === '/' ? null : pathname.split('/')[1] ?? null;
@@ -77,7 +78,7 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
       {/* Search */}
       <button
         onClick={onSearchOpen}
-        className="mx-2.5 mt-2.5 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-all hover:bg-[var(--sidebar-hover)]"
+        className="mx-2.5 mt-2.5 flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-all hover:bg-[var(--sidebar-hover)]"
         style={{ color: 'var(--muted)', border: '1px solid var(--sidebar-border)' }}
       >
         <Search size={12} />
@@ -88,7 +89,7 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
       {/* Pathway link — always visible */}
       <Link
         href="/pathway"
-        className="mx-2.5 mt-1.5 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-all hover:bg-[var(--sidebar-hover)]"
+        className="mx-2.5 mt-1.5 flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-all hover:bg-[var(--sidebar-hover)]"
         style={{
           color: pathname === '/pathway' ? 'var(--sidebar-active-text)' : 'var(--muted)',
           backgroundColor: pathname === '/pathway' ? 'var(--sidebar-active)' : 'transparent',
@@ -101,7 +102,7 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
 
       <Link
         href="/review"
-        className="mx-2.5 mt-1.5 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-all hover:bg-[var(--sidebar-hover)]"
+        className="mx-2.5 mt-1.5 flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-all hover:bg-[var(--sidebar-hover)]"
         style={{
           color: pathname === '/review' ? 'var(--sidebar-active-text)' : 'var(--muted)',
           backgroundColor: pathname === '/review' ? 'var(--sidebar-active)' : 'transparent',
@@ -112,7 +113,22 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
         <span className="flex-1 text-left">Review Mode</span>
       </Link>
 
-      {activeSection ? (
+      <Link
+        href="/special"
+        className="mx-2.5 mt-1.5 flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-all hover:bg-[var(--sidebar-hover)]"
+        style={{
+          color: pathname === '/special' ? 'var(--sidebar-active-text)' : 'var(--muted)',
+          backgroundColor: pathname === '/special' ? 'var(--sidebar-active)' : 'transparent',
+          border: '1px solid var(--sidebar-border)',
+        }}
+      >
+        <Sparkles size={12} />
+        <span className="flex-1 text-left">DSA Sprint</span>
+      </Link>
+
+      {isSpecialPage ? (
+        <SpecialNav />
+      ) : activeSection ? (
         /* ── Section view: only current section's tree ── */
         <SectionNav section={activeSection} pathname={pathname} recentPages={recentPages} />
       ) : (
@@ -146,6 +162,69 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
   );
 }
 
+function SpecialNav() {
+  const items = [
+    { href: '#overview', label: 'Overview', icon: Sparkles },
+    { href: '#daily-drills', label: 'Daily Drills', icon: Flame },
+    { href: '#strategy', label: 'Strategy', icon: Target },
+    { href: '#roadmap', label: 'Roadmap', icon: Map },
+    { href: '#mastery', label: 'Pattern Mastery', icon: Layers },
+    { href: '#fundamentals', label: 'JS Foundation', icon: Code2 },
+    { href: '#phase-1', label: 'Core Patterns', icon: Brain },
+    { href: '#phase-2', label: 'Intermediate', icon: Server },
+    { href: '#phase-3', label: 'Advanced', icon: Zap },
+    { href: '#learning-loop', label: 'Learning Loop', icon: RotateCcw },
+    { href: '#tools-habits', label: 'Tools & Habits', icon: Wrench },
+  ];
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="px-2 pt-2">
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-[var(--sidebar-hover)]"
+          style={{ color: 'var(--muted)' }}
+        >
+          <ArrowLeft size={11} />
+          <span>Back to atlas</span>
+        </Link>
+      </div>
+
+      <div
+        className="flex items-center gap-2 px-3 py-2 mx-2 mt-1 mb-2 rounded-lg"
+        style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--fg)' }}
+      >
+        <Sparkles size={14} className="shrink-0" style={{ color: 'var(--accent)' }} />
+        <span className="font-semibold text-xs leading-tight truncate">DSA Sprint</span>
+      </div>
+
+      <nav className="flex-1 px-2 pb-3 overflow-y-auto">
+        <div className="px-1 pb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+            Sprint Map
+          </span>
+        </div>
+        <div className="space-y-0.5">
+          {items.map(item => {
+            const Icon = item.icon;
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-2.5 w-full rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-[var(--sidebar-hover)]"
+                style={{ color: 'var(--muted)' }}
+              >
+                <Icon size={13} className="shrink-0" style={{ color: 'var(--accent)', opacity: 0.75 }} />
+                <span className="truncate font-medium">{item.label}</span>
+              </a>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
+  );
+}
+
 // ─── Home view: flat list of all sections ────────────────────────────────────
 
 function AllSectionsNav({ nav, pathname }: { nav: NavItem[]; pathname: string }) {
@@ -167,7 +246,7 @@ function AllSectionsNav({ nav, pathname }: { nav: NavItem[]; pathname: string })
           <Link
             key={slug0}
             href={href}
-            className="flex items-center gap-2.5 w-full rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-[var(--sidebar-hover)]"
+            className="flex items-center gap-2.5 w-full rounded-md px-2 py-2 text-sm transition-colors hover:bg-[var(--sidebar-hover)]"
             style={{ color: isActive ? 'var(--sidebar-active-text)' : 'var(--muted)' }}
           >
             <Icon size={13} className="shrink-0" style={{ color: 'var(--accent)', opacity: 0.75 }} />
@@ -229,7 +308,7 @@ function SectionNav({
                 <Link
                   key={page.slug}
                   href={`/${page.slug}`}
-                  className="block rounded-md px-2 py-1.5 text-[11px] leading-snug transition-colors hover:bg-[var(--sidebar-hover)]"
+                  className="block rounded-md px-2 py-2 text-xs leading-snug transition-colors hover:bg-[var(--sidebar-hover)]"
                   style={{ color: 'var(--muted)' }}
                   title={page.title}
                 >
@@ -286,7 +365,7 @@ function NavNode({ item, pathname, depth }: { item: NavItem; pathname: string; d
     return (
       <Link
         href={href}
-        className={`nav-item block rounded py-1 px-2 text-xs leading-5 transition-colors ${active ? 'nav-active' : ''}`}
+        className={`nav-item block rounded py-1.5 px-2 text-sm leading-6 transition-colors ${active ? 'nav-active' : ''}`}
         style={{
           color: active ? 'var(--sidebar-active-text)' : 'var(--muted)',
           paddingLeft: `${depth * 8 + 8}px`,
@@ -302,7 +381,7 @@ function NavNode({ item, pathname, depth }: { item: NavItem; pathname: string; d
     <div>
       <button
         onClick={() => setOpen(o => !o)}
-        className="nav-item w-full flex items-center justify-between py-1 px-2 rounded text-xs leading-5 font-medium text-left transition-colors hover:bg-[var(--sidebar-hover)]"
+        className="nav-item w-full flex items-center justify-between py-1.5 px-2 rounded text-sm leading-6 font-medium text-left transition-colors hover:bg-[var(--sidebar-hover)]"
         style={{ color: isActive ? 'var(--fg)' : 'var(--muted)', paddingLeft: `${depth * 8 + 8}px` }}
       >
         <span className="truncate">{item.title}</span>
