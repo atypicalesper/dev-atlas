@@ -42,7 +42,7 @@ html {
   --sidebar-hover: #e6dfd0;
   --sidebar-active: #e3dbc9;
   --sidebar-active-text: #4a2fcf;
-  --code-bg: #211c14;
+  --code-bg: #2a2419;
   --accent: #6a4bf2;
   --accent-hover: #4a2fcf;
   --accent-glow: rgba(106, 75, 242, 0.12);
@@ -793,4 +793,34 @@ body {
 }
 .page-content {
   animation: page-fade-in 0.35s ease both;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  /* Neutralise CSS keyframe entrances and loops */
+  .topic-card,
+  .dir-card,
+  .page-content {
+    animation: none !important;
+  }
+  .nf-pulse {
+    animation: none !important;
+    opacity: 0.8;
+  }
+  .atlas-orb {
+    /* keep the static glow, drop any motion */
+    animation: none !important;
+  }
+
+  /* Collapse transitions/animations to a hair so nothing visibly moves */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

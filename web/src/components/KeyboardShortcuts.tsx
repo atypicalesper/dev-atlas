@@ -18,6 +18,8 @@ const SHORTCUTS = [
     { keys: ['Esc'],      desc: 'Close search' },
   ]},
   { category: 'Reading', items: [
+    { keys: ['j'],        desc: 'Next heading' },
+    { keys: ['k'],        desc: 'Previous heading' },
     { keys: ['↑'],        desc: 'Scroll up' },
     { keys: ['↓'],        desc: 'Scroll down' },
   ]},

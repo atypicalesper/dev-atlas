@@ -378,7 +378,7 @@ export default function SpecialClient() {
                 <Sparkles size={12} />
                 Special Route
               </div>
-              <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl" style={{ color: THEME.text }}>
+              <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl" style={{ color: THEME.text, fontFamily: 'var(--font-display)' }}>
                 Algorithmic fluency and interview speed, turned into a live training cockpit.
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-8" style={{ color: THEME.textMuted }}>
@@ -502,7 +502,7 @@ export default function SpecialClient() {
               <div className="text-xs uppercase tracking-[0.22em]" style={{ color: THEME.eyebrow, fontFamily: 'JetBrains Mono, monospace' }}>
                 Pattern mastery
               </div>
-              <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text }}>
+              <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text, fontFamily: 'var(--font-display)' }}>
                 Where your reps are compounding
               </h2>
             </div>
@@ -606,7 +606,7 @@ export default function SpecialClient() {
             <div className="text-xs uppercase tracking-[0.22em]" style={{ color: THEME.eyebrow, fontFamily: 'JetBrains Mono, monospace' }}>
               Most important skill
             </div>
-            <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text }}>
+            <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text, fontFamily: 'var(--font-display)' }}>
               Recognize the pattern quickly.
             </h2>
             <p className="mt-3 text-sm leading-7" style={{ color: THEME.textMuted }}>
@@ -656,7 +656,7 @@ function ChecklistSection({
             <Icon size={14} />
             {section.eyebrow}
           </div>
-          <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text }}>{section.title}</h2>
+          <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text, fontFamily: 'var(--font-display)' }}>{section.title}</h2>
           <p className="mt-2 max-w-3xl text-sm leading-7" style={{ color: THEME.textMuted }}>{section.description}</p>
         </div>
         <div className="rounded-[1.2rem] border px-4 py-3 text-sm font-medium" style={{ borderColor: THEME.border, color: THEME.text, backgroundColor: THEME.panelBackgroundSoft }}>
@@ -708,7 +708,7 @@ function ChecklistColumn({
       <div className="text-xs uppercase tracking-[0.22em]" style={{ color: THEME.eyebrow, fontFamily: 'JetBrains Mono, monospace' }}>
         {eyebrow}
       </div>
-      <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text }}>{title}</h2>
+      <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text, fontFamily: 'var(--font-display)' }}>{title}</h2>
       <p className="mt-2 text-sm leading-7" style={{ color: THEME.textMuted }}>{description}</p>
       <div className="mt-5 space-y-3">
         {tasks.map(task => (
@@ -816,7 +816,7 @@ function DrillCard({
       <div className="text-xs uppercase tracking-[0.2em]" style={{ color: accent, fontFamily: 'JetBrains Mono, monospace' }}>
         {eyebrow}
       </div>
-      <h2 className="mt-2 text-xl font-semibold" style={{ color: THEME.text }}>{title}</h2>
+      <h2 className="mt-2 text-xl font-semibold" style={{ color: THEME.text, fontFamily: 'var(--font-display)' }}>{title}</h2>
       <p className="mt-2 text-sm leading-7" style={{ color: THEME.textMuted }}>{description}</p>
       {task ? (
         <div className="mt-4 rounded-[1.2rem] border px-4 py-4" style={{ borderColor: THEME.border, backgroundColor: THEME.panelBackgroundSoft }}>
@@ -871,7 +871,7 @@ function GradientPanel({
       <div className="text-xs uppercase tracking-[0.22em]" style={{ color: THEME.eyebrow, fontFamily: 'JetBrains Mono, monospace' }}>
         {eyebrow}
       </div>
-      <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text }}>{title}</h2>
+      <h2 className="mt-2 text-2xl font-semibold" style={{ color: THEME.text, fontFamily: 'var(--font-display)' }}>{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
   );

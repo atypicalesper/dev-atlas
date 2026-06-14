@@ -7,6 +7,10 @@ const VISIT_DAYS_KEY = 'devatlas_visit_days';
 const SKILL_COUNTS_KEY = 'devatlas_skill_counts';
 const QUIZ_RESULTS_KEY = 'devatlas_quiz_results';
 const READ_PROGRESS_KEY = 'devatlas_read_progress';
+const COMPLETED_KEY = 'devatlas_completed';
+
+/** Fired whenever the completed set changes, so sidebars/rings can refresh live. */
+export const COMPLETED_EVENT = 'devatlas-completed-change';
 
 export interface RecentPage {
   slug: string;   // e.g. "01-javascript-fundamentals/01-event-loop/01-event-loop-deep-dive"
@@ -93,6 +97,46 @@ export function getRecent(): RecentPage[] {
   } catch {
     return [];
   }
+}
+
+/** Slugs the user has explicitly marked as completed/mastered. */
+export function getCompletedSet(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    return new Set(JSON.parse(localStorage.getItem(COMPLETED_KEY) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+export function isComplete(slugKey: string): boolean {
+  return getCompletedSet().has(slugKey);
+}
+
+/** Toggle completion for a doc. Returns the new completed state. */
+export function toggleComplete(slugKey: string): boolean {
+  if (typeof window === 'undefined') return false;
+  const set = getCompletedSet();
+  const nowComplete = !set.has(slugKey);
+  if (nowComplete) set.add(slugKey);
+  else set.delete(slugKey);
+  localStorage.setItem(COMPLETED_KEY, JSON.stringify([...set]));
+  window.dispatchEvent(new Event(COMPLETED_EVENT));
+  return nowComplete;
+}
+
+export function getCompletedCount(): number {
+  return getCompletedSet().size;
+}
+
+/** How many completed docs live under a given top-level section. */
+export function getCompletedCountBySection(sectionSlug: string): number {
+  if (typeof window === 'undefined') return 0;
+  let count = 0;
+  for (const key of getCompletedSet()) {
+    if (key.startsWith(sectionSlug + '/')) count += 1;
+  }
+  return count;
 }
 
 export function getBookmarks(): string[] {
