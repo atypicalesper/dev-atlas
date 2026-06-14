@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} themes={['light', 'dark', 'midnight', 'ocean', 'forest', 'dawn', 'slate']}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} themes={['light', 'paper', 'dark', 'midnight', 'ocean', 'forest', 'dawn', 'slate']}>
           <NotebookProvider>
             <Shell nav={nav} searchIndex={searchIndex}>
               {children}

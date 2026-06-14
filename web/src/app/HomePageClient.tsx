@@ -191,7 +191,13 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
     <div className="px-4 sm:px-8 py-8 sm:py-10 max-w-5xl mx-auto" ref={gridRef}>
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <div ref={heroRef} className="mb-10">
+      <div ref={heroRef} className="relative isolate mb-10">
+        {/* Editorial background orbs */}
+        <div className="atlas-orbs" aria-hidden>
+          <span className="atlas-orb atlas-orb-1" />
+          <span className="atlas-orb atlas-orb-2" />
+          <span className="atlas-orb atlas-orb-3" />
+        </div>
         {/* Gradient glow behind title */}
         <div className="relative mb-3">
           {/* Dot grid background */}
@@ -694,7 +700,7 @@ function SectionHeading({
       <div className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--accent)' }}>
         {eyebrow}
       </div>
-      <h2 className="mt-1 text-xl font-semibold" style={{ color: 'var(--fg)' }}>
+      <h2 className="section-heading-title mt-1 text-2xl" style={{ color: 'var(--fg)' }}>
         {title}
       </h2>
       <p className="mt-1 text-sm max-w-2xl" style={{ color: 'var(--muted)' }}>
