@@ -10,6 +10,7 @@ import PrevNextNav from '@/components/PrevNextNav';
 import NotebookProseDecor from '@/components/NotebookProseDecor';
 import AddToPathwayButton from '@/components/AddToPathwayButton';
 import FavoriteButton from '@/components/FavoriteButton';
+import CompleteButton from '@/components/CompleteButton';
 import LearningToolkit from '@/components/LearningToolkit';
 import PredictTheOutput from '@/components/PredictTheOutput';
 import SectionQuiz from '@/components/SectionQuiz';
@@ -113,7 +114,7 @@ export default async function DocPage({ params }: PageProps) {
 
         <div className="flex items-center gap-3 mt-6 mb-2">
           <FolderOpen size={22} style={{ color: 'var(--accent)' }} />
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--fg)' }}>{dir.title}</h1>
+          <h1 className="text-3xl" style={{ color: 'var(--fg)', fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '-0.01em' }}>{dir.title}</h1>
         </div>
         <p className="text-sm mb-8" style={{ color: 'var(--muted)' }}>
           {dir.children.length} {dir.children.length === 1 ? 'section' : 'sections'}
@@ -193,6 +194,7 @@ export default async function DocPage({ params }: PageProps) {
                 <Zap size={11} />
                 {readingVibe(doc.content)}
               </span>
+              <CompleteButton href={`/${slug.join('/')}`} />
               <FavoriteButton href={`/${slug.join('/')}`} />
               <AddToPathwayButton title={doc.title} href={`/${slug.join('/')}`} />
             </div>

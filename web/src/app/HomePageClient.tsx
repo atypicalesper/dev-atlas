@@ -8,7 +8,9 @@ import gsap from 'gsap';
 import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, Compass, ArrowRightLeft, RotateCcw, type LucideIcon } from 'lucide-react';
 import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak, getVisitedSet, getBookmarks, getTopSkills, getMissedQuizQuestions, getInProgressDocs, type InProgressDoc } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
+import { getSrsStats } from '@/lib/srs';
 import RoughBorder from '@/components/RoughBorder';
+import ShareProgressCard from '@/components/ShareProgressCard';
 import type { DocSummary } from '@/lib/docs';
 
 const SECTIONS: { icon: LucideIcon; title: string; slug: string; desc: string; badge?: string }[] = [
@@ -120,6 +122,8 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
   const [oldBookmark, setOldBookmark] = useState<DocSummary | null>(null);
   const [topSkills, setTopSkills] = useState<Array<{ skill: string; count: number }>>([]);
   const [missedCount, setMissedCount] = useState(0);
+  const [srsDue, setSrsDue] = useState(0);
+  const [srsTotal, setSrsTotal] = useState(0);
   const [inProgressDocs, setInProgressDocs] = useState<InProgressDoc[]>([]);
 
   useLayoutEffect(() => {
@@ -150,10 +154,14 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
     setOldBookmark(bookmarkedDoc);
     setTopSkills(getTopSkills(4));
     setMissedCount(getMissedQuizQuestions().length);
+    const srs = getSrsStats();
+    setSrsDue(srs.due);
+    setSrsTotal(srs.total);
     setInProgressDocs(getInProgressDocs(2));
   }, [docs]);
 
   useGSAP(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     gsap.from(heroRef.current, {
       opacity: 0,
       y: -30,
@@ -191,7 +199,13 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
     <div className="px-4 sm:px-8 py-8 sm:py-10 max-w-5xl mx-auto" ref={gridRef}>
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <div ref={heroRef} className="mb-10">
+      <div ref={heroRef} className="relative isolate mb-10">
+        {/* Editorial background orbs */}
+        <div className="atlas-orbs" aria-hidden>
+          <span className="atlas-orb atlas-orb-1" />
+          <span className="atlas-orb atlas-orb-2" />
+          <span className="atlas-orb atlas-orb-3" />
+        </div>
         {/* Gradient glow behind title */}
         <div className="relative mb-3">
           {/* Dot grid background */}
@@ -342,8 +356,16 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
           className="rounded-2xl border p-5"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
-          <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted)' }}>
-            Your Momentum
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
+              Your Momentum
+            </div>
+            <ShareProgressCard
+              streak={streak}
+              pagesRead={totalVisited}
+              bookmarks={bookmarkCount}
+              topSkill={topSkills[0] ? formatSkill(topSkills[0].skill) : undefined}
+            />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <StatTile icon={Flame} value={String(streak)} label="Day streak" />
@@ -416,13 +438,37 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
         >
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
             <RotateCcw size={12} />
-            Review mode
+            Today&apos;s review
           </div>
           <div className="text-base font-semibold" style={{ color: 'var(--fg)' }}>
-            Retry missed questions and saved reads
+            {srsDue + missedCount > 0 ? 'You have cards ready to review' : 'Retry missed questions and saved reads'}
           </div>
-          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
-            {missedCount > 0 ? `${missedCount} missed quiz cards are waiting for a comeback run.` : 'Your quizzes, bookmarks, and weak spots now have a single return surface.'}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span
+              className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
+              style={{
+                borderColor: srsDue > 0 ? 'var(--accent)' : 'var(--border)',
+                color: srsDue > 0 ? 'var(--accent)' : 'var(--muted)',
+                backgroundColor: srsDue > 0 ? 'var(--accent-glow)' : 'transparent',
+              }}
+            >
+              {srsDue} flashcard{srsDue === 1 ? '' : 's'} due{srsTotal > 0 ? ` / ${srsTotal}` : ''}
+            </span>
+            <span
+              className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
+              style={{
+                borderColor: missedCount > 0 ? 'var(--accent)' : 'var(--border)',
+                color: missedCount > 0 ? 'var(--accent)' : 'var(--muted)',
+                backgroundColor: missedCount > 0 ? 'var(--accent-glow)' : 'transparent',
+              }}
+            >
+              {missedCount} missed question{missedCount === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
+            {srsDue + missedCount > 0
+              ? 'Spaced-repetition flashcards and missed quiz questions, bundled into one comeback run.'
+              : 'Answer quizzes and rate flashcards as you read — they collect here into a daily review queue.'}
           </div>
         </Link>
 
@@ -694,7 +740,7 @@ function SectionHeading({
       <div className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--accent)' }}>
         {eyebrow}
       </div>
-      <h2 className="mt-1 text-xl font-semibold" style={{ color: 'var(--fg)' }}>
+      <h2 className="section-heading-title mt-1 text-2xl" style={{ color: 'var(--fg)' }}>
         {title}
       </h2>
       <p className="mt-1 text-sm max-w-2xl" style={{ color: 'var(--muted)' }}>

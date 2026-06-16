@@ -40,8 +40,8 @@ export default function DirGrid({ items }: Props) {
               <div className="flex items-center justify-between mb-3">
                 <Link
                   href={href}
-                  className="font-semibold text-sm hover:text-indigo-400 transition-colors inline-flex items-center gap-1"
-                  style={{ color: 'var(--fg)' }}
+                  className="font-semibold text-base hover:text-indigo-400 transition-colors inline-flex items-center gap-1"
+                  style={{ color: 'var(--fg)', fontFamily: 'var(--font-display)' }}
                 >
                   {child.title}
                   <ChevronRight size={13} style={{ color: 'var(--muted)' }} />
@@ -82,7 +82,7 @@ export default function DirGrid({ items }: Props) {
             }}
           >
             {notebook && <RoughBorder />}
-            <span className="font-semibold text-sm group-hover:text-indigo-400 transition-colors" style={{ color: 'var(--fg)' }}>
+            <span className="font-semibold text-base group-hover:text-indigo-400 transition-colors" style={{ color: 'var(--fg)', fontFamily: 'var(--font-display)' }}>
               {child.title}
             </span>
           </Link>

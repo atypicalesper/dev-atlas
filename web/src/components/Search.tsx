@@ -3,11 +3,13 @@
 import { useState, useEffect, useRef, useCallback, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search as SearchIcon, X, ArrowRight, Clock, Hash, TrendingUp, Shuffle, Heart, Layers3, Brain, Server, Bot, Wrench, FileText } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Search as SearchIcon, X, ArrowRight, Clock, Hash, TrendingUp, Shuffle, Heart, Layers3, Brain, Server, Bot, Wrench, FileText, Palette, RotateCcw, Map, Home, Printer, PenLine, Command, Sparkles, type LucideIcon } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import type { SearchItem } from '@/lib/docs';
 import { getBookmarks, toggleBookmark } from '@/lib/progress';
+import { useNotebook } from '@/lib/notebook';
 
 interface Props {
   index: SearchItem[];
@@ -27,6 +29,29 @@ const KIND_FILTERS: Array<{ label: string; value: SearchItem['kind']; icon: type
   { label: 'Interview', value: 'interview', icon: Layers3 },
   { label: 'Cheatsheets', value: 'cheatsheet', icon: Heart },
 ];
+
+const PALETTE_THEMES = ['light', 'paper', 'dark', 'midnight', 'ocean', 'forest', 'dawn', 'slate'];
+
+interface PaletteAction {
+  id: string;
+  label: string;
+  hint?: string;
+  icon: LucideIcon;
+  keywords: string;
+  run: () => void;
+}
+
+function scoreAction(action: PaletteAction, q: string): number {
+  if (!q) return 1;
+  const label = action.label.toLowerCase();
+  let points = 0;
+  if (label.includes(q)) points += 50;
+  for (const token of q.split(/\s+/).filter(Boolean)) {
+    if (label.includes(token)) points += 14;
+    if (action.keywords.includes(token)) points += 8;
+  }
+  return points;
+}
 
 function loadRecentSearches(): string[] {
   try {
@@ -171,6 +196,8 @@ function Highlight({ text, query }: { text: string; query: string }) {
 
 export default function Search({ index, onClose }: Props) {
   const router = useRouter();
+  const { setTheme } = useTheme();
+  const { notebook, toggleNotebook } = useNotebook();
   const [query, setQuery]       = useState('');
   const [results, setResults]   = useState<SearchItem[]>([]);
   const [selected, setSelected] = useState(0);
@@ -204,13 +231,6 @@ export default function Search({ index, onClose }: Props) {
     [onClose],
   );
 
-  const openSelected = useCallback(() => {
-    const item = results[selected];
-    if (!item) return;
-    handleClose(query);
-    router.push(itemHref(item));
-  }, [results, selected, handleClose, query, router]);
-
   const openRandom = useCallback(() => {
     const random = index[Math.floor(Math.random() * index.length)];
     if (!random) return;
@@ -224,6 +244,56 @@ export default function Search({ index, onClose }: Props) {
     handleClose();
     router.push('/' + firstBookmark);
   }, [bookmarks, handleClose, router]);
+
+  // ── Command-palette actions ─────────────────────────────────────────────
+  const actions: PaletteAction[] = (() => {
+    const go = (href: string) => () => { handleClose(); router.push(href); };
+    return [
+      { id: 'random', label: 'Open a random doc', icon: Shuffle, keywords: 'random surprise lucky shuffle', run: () => openRandom() },
+      { id: 'review', label: 'Go to Review mode', icon: RotateCcw, keywords: 'review srs spaced repetition flashcards missed due', run: go('/review') },
+      { id: 'pathway', label: 'Open My Pathways', icon: Map, keywords: 'pathway path plan saved sequence', run: go('/pathway') },
+      { id: 'sprint', label: 'Open DSA Sprint', icon: Sparkles, keywords: 'dsa sprint special algorithms leetcode practice', run: go('/special') },
+      { id: 'home', label: 'Go to Home', icon: Home, keywords: 'home start atlas index dashboard', run: go('/') },
+      { id: 'notebook', label: notebook ? 'Turn off notebook mode' : 'Turn on notebook mode', icon: PenLine, keywords: 'notebook sketch hand drawn rough doodle handwritten', run: () => { handleClose(); toggleNotebook(); } },
+      { id: 'shortcuts', label: 'Show keyboard shortcuts', icon: Command, keywords: 'shortcuts keyboard keys help hotkeys', run: () => { handleClose(); window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' })); } },
+      { id: 'print', label: 'Print this page', icon: Printer, keywords: 'print pdf save export paper', run: () => { handleClose(); window.print(); } },
+      ...PALETTE_THEMES.map((t): PaletteAction => ({
+        id: `theme-${t}`,
+        label: `Switch to ${t.charAt(0).toUpperCase()}${t.slice(1)} theme`,
+        hint: 'theme',
+        icon: Palette,
+        keywords: `theme ${t} color colour appearance dark light mode`,
+        run: () => { handleClose(); setTheme(t); },
+      })),
+    ];
+  })();
+
+  const isCommandMode = query.trimStart().startsWith('>');
+  const actionQuery = (isCommandMode ? query.trimStart().slice(1) : query).trim().toLowerCase();
+  const matchedActions: PaletteAction[] = (() => {
+    const cap = isCommandMode ? 8 : 3;
+    if (!isCommandMode && !actionQuery) return [];
+    return actions
+      .map(a => ({ a, s: scoreAction(a, actionQuery) }))
+      .filter(e => e.s > 0)
+      .sort((x, y) => y.s - x.s)
+      .map(e => e.a)
+      .slice(0, cap);
+  })();
+
+  const docResults = isCommandMode ? [] : results;
+  const totalSelectable = matchedActions.length + docResults.length;
+
+  const runSelected = useCallback(() => {
+    if (selected < matchedActions.length) {
+      matchedActions[selected]?.run();
+      return;
+    }
+    const item = docResults[selected - matchedActions.length];
+    if (!item) return;
+    handleClose(query);
+    router.push(itemHref(item));
+  }, [selected, matchedActions, docResults, handleClose, query, router]);
 
   const applyFilter = useCallback((fragment: string) => {
     setQuery(current => {
@@ -255,14 +325,14 @@ export default function Search({ index, onClose }: Props) {
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') { handleClose(); return; }
-      if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, results.length - 1)); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, totalSelectable - 1)); }
       if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
-      if (e.key === 'Enter' && results[selected]) {
+      if (e.key === 'Enter' && totalSelectable > 0) {
         e.preventDefault();
-        openSelected();
+        runSelected();
       }
     },
-    [results, selected, handleClose, openSelected],
+    [handleClose, totalSelectable, runSelected],
   );
 
   useEffect(() => {
@@ -290,7 +360,7 @@ export default function Search({ index, onClose }: Props) {
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search topics, concepts, keywords…"
+            placeholder="Search docs, or type > for commands…"
             className="flex-1 bg-transparent outline-none text-sm"
             style={{ color: 'var(--fg)' }}
           />
@@ -358,109 +428,154 @@ export default function Search({ index, onClose }: Props) {
         </div>
 
         {/* Results */}
-        {results.length > 0 ? (
-          <>
-            <div
-              className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}
-            >
-              {results.length} result{results.length !== 1 ? 's' : ''}
-            </div>
-            <ul className="py-1.5 max-h-[22rem] overflow-y-auto">
-              {results.map((item, i) => (
-                <li key={item.headingId ? `${item.slug.join('/')}#${item.headingId}` : item.slug.join('/')}>
-                  <Link
-                    href={itemHref(item)}
-                    onClick={() => handleClose(query)}
-                    onMouseEnter={() => setSelected(i)}
-                    className="flex items-start gap-3 px-4 py-2.5 transition-colors"
-                    style={{ backgroundColor: i === selected ? 'var(--sidebar-active)' : undefined }}
-                  >
-                    {item.headingText && (
-                      <Hash size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--muted)' }} />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      {item.headingText ? (
-                        <>
-                          <div
-                            className="text-sm font-medium leading-snug"
-                            style={{ color: i === selected ? 'var(--sidebar-active-text)' : 'var(--fg)' }}
-                          >
-                            <Highlight text={item.headingText} query={query} />
-                          </div>
-                          <div className="mt-0.5 text-xs" style={{ color: 'var(--muted)' }}>
-                            in {item.title} · {item.section}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div
-                            className="text-sm font-medium leading-snug"
-                            style={{ color: i === selected ? 'var(--sidebar-active-text)' : 'var(--fg)' }}
-                          >
-                            <Highlight text={item.title} query={query} />
-                          </div>
-                          {item.section && (
-                            <div className="mt-0.5 flex items-center gap-2">
-                              <div className="text-xs" style={{ color: 'var(--muted)' }}>
-                                {item.path}
-                              </div>
-                              <span
-                                className="rounded-full px-1.5 py-0.5 text-[10px] uppercase"
-                                style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--sidebar-active-text)' }}
+        {(matchedActions.length > 0 || docResults.length > 0) ? (
+          <div className="max-h-[24rem] overflow-y-auto">
+            {matchedActions.length > 0 && (
+              <>
+                <div
+                  className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5"
+                  style={{ color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}
+                >
+                  <Command size={11} /> Actions
+                </div>
+                <ul className="py-1.5">
+                  {matchedActions.map((action, i) => {
+                    const Icon = action.icon;
+                    const isSel = i === selected;
+                    return (
+                      <li key={action.id}>
+                        <button
+                          onClick={() => action.run()}
+                          onMouseEnter={() => setSelected(i)}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
+                          style={{ backgroundColor: isSel ? 'var(--sidebar-active)' : undefined }}
+                        >
+                          <Icon size={15} className="shrink-0" style={{ color: isSel ? 'var(--sidebar-active-text)' : 'var(--muted)' }} />
+                          <span className="flex-1 text-sm font-medium" style={{ color: isSel ? 'var(--sidebar-active-text)' : 'var(--fg)' }}>
+                            {action.label}
+                          </span>
+                          {action.hint && (
+                            <span className="rounded-full px-1.5 py-0.5 text-[10px] uppercase" style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--sidebar-active-text)' }}>
+                              {action.hint}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+
+            {docResults.length > 0 && (
+              <>
+                <div
+                  className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--muted)', borderBottom: '1px solid var(--border)', borderTop: matchedActions.length > 0 ? '1px solid var(--border)' : undefined }}
+                >
+                  {docResults.length} result{docResults.length !== 1 ? 's' : ''}
+                </div>
+                <ul className="py-1.5">
+                  {docResults.map((item, i) => {
+                    const idx = matchedActions.length + i;
+                    const isSel = idx === selected;
+                    return (
+                    <li key={item.headingId ? `${item.slug.join('/')}#${item.headingId}` : item.slug.join('/')}>
+                      <Link
+                        href={itemHref(item)}
+                        onClick={() => handleClose(query)}
+                        onMouseEnter={() => setSelected(idx)}
+                        className="flex items-start gap-3 px-4 py-2.5 transition-colors"
+                        style={{ backgroundColor: isSel ? 'var(--sidebar-active)' : undefined }}
+                      >
+                        {item.headingText && (
+                          <Hash size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--muted)' }} />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          {item.headingText ? (
+                            <>
+                              <div
+                                className="text-sm font-medium leading-snug"
+                                style={{ color: isSel ? 'var(--sidebar-active-text)' : 'var(--fg)' }}
                               >
-                                {item.kind}
-                              </span>
-                            </div>
+                                <Highlight text={item.headingText} query={query} />
+                              </div>
+                              <div className="mt-0.5 text-xs" style={{ color: 'var(--muted)' }}>
+                                in {item.title} · {item.section}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div
+                                className="text-sm font-medium leading-snug"
+                                style={{ color: isSel ? 'var(--sidebar-active-text)' : 'var(--fg)' }}
+                              >
+                                <Highlight text={item.title} query={query} />
+                              </div>
+                              {item.section && (
+                                <div className="mt-0.5 flex items-center gap-2">
+                                  <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                                    {item.path}
+                                  </div>
+                                  <span
+                                    className="rounded-full px-1.5 py-0.5 text-[10px] uppercase"
+                                    style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--sidebar-active-text)' }}
+                                  >
+                                    {item.kind}
+                                  </span>
+                                </div>
+                              )}
+                              {item.excerpt && (
+                                <div className="text-xs mt-1 line-clamp-1" style={{ color: 'var(--muted)' }}>
+                                  <Highlight text={item.excerpt} query={query} />
+                                </div>
+                              )}
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <button
+                                  onClick={e => toggleResultBookmark(item.slug.join('/'), e)}
+                                  className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
+                                  style={{
+                                    borderColor: 'var(--border)',
+                                    backgroundColor: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active)' : 'transparent',
+                                    color: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active-text)' : 'var(--muted)',
+                                  }}
+                                >
+                                  <Heart size={10} fill={bookmarks.includes(item.slug.join('/')) ? 'currentColor' : 'none'} />
+                                  {bookmarks.includes(item.slug.join('/')) ? 'Saved' : 'Save'}
+                                </button>
+                                <button
+                                  onClick={e => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    applyFilter(`section:${item.section.toLowerCase()}`);
+                                  }}
+                                  className="rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
+                                  style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
+                                >
+                                  More {item.section}
+                                </button>
+                              </div>
+                            </>
                           )}
-                          {item.excerpt && (
-                            <div className="text-xs mt-1 line-clamp-1" style={{ color: 'var(--muted)' }}>
-                              <Highlight text={item.excerpt} query={query} />
-                            </div>
-                          )}
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <button
-                              onClick={e => toggleResultBookmark(item.slug.join('/'), e)}
-                              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
-                              style={{
-                                borderColor: 'var(--border)',
-                                backgroundColor: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active)' : 'transparent',
-                                color: bookmarks.includes(item.slug.join('/')) ? 'var(--sidebar-active-text)' : 'var(--muted)',
-                              }}
-                            >
-                              <Heart size={10} fill={bookmarks.includes(item.slug.join('/')) ? 'currentColor' : 'none'} />
-                              {bookmarks.includes(item.slug.join('/')) ? 'Saved' : 'Save'}
-                            </button>
-                            <button
-                              onClick={e => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                applyFilter(`section:${item.section.toLowerCase()}`);
-                              }}
-                              className="rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:bg-[var(--sidebar-hover)]"
-                              style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
-                            >
-                              More {item.section}
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <ArrowRight size={13} className="shrink-0 mt-1" style={{ color: 'var(--muted)' }} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </>
+                        </div>
+                        <ArrowRight size={13} className="shrink-0 mt-1" style={{ color: 'var(--muted)' }} />
+                      </Link>
+                    </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </div>
 
         ) : query ? (
           /* No results */
           <div className="px-4 py-6 text-center">
             <p className="text-sm mb-2" style={{ color: 'var(--muted)' }}>
-              No results for &ldquo;{query}&rdquo;
+              {isCommandMode ? 'No matching commands' : <>No results for &ldquo;{query}&rdquo;</>}
             </p>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              Try: event loop, generics, Redis, Docker, JWT, SOLID…
+              {isCommandMode ? 'Try: theme, review, random, notebook, print' : 'Try: event loop, generics, Redis, Docker, JWT, SOLID…'}
             </p>
           </div>
 
@@ -559,7 +674,7 @@ export default function Search({ index, onClose }: Props) {
           <span><kbd className="kbd">↑↓</kbd> navigate</span>
           <span><kbd className="kbd">↵</kbd> open</span>
           <span><kbd className="kbd">esc</kbd> close</span>
-          <span><kbd className="kbd">section:</kbd> or chips</span>
+          <span><kbd className="kbd">&gt;</kbd> commands</span>
         </div>
       </div>
     </div>

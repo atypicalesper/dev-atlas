@@ -4,18 +4,20 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { Palette, Check } from 'lucide-react';
 
-const THEMES: { id: string; label: string; swatch: string; dark: boolean }[] = [
-  { id: 'light',    label: 'Light',    swatch: '#fafafa',  dark: false },
-  { id: 'dark',     label: 'Dark',     swatch: '#0b0d14',  dark: true  },
-  { id: 'midnight', label: 'Midnight', swatch: '#1e1e2e',  dark: true  },
-  { id: 'ocean',    label: 'Ocean',    swatch: '#1c2333',  dark: true  },
-  { id: 'forest',   label: 'Forest',   swatch: '#1d2021',  dark: true  },
-  { id: 'dawn',     label: 'Dawn',     swatch: '#fdf6e3',  dark: false },
-  { id: 'slate',    label: 'Slate',    swatch: '#1e1e1e',  dark: true  },
+const THEMES: { id: string; label: string; desc: string; swatch: string; dark: boolean }[] = [
+  { id: 'light',    label: 'Light',    desc: 'clean daylight',     swatch: '#fafafa',  dark: false },
+  { id: 'paper',    label: 'Paper',    desc: 'warm editorial',     swatch: '#f3efe6',  dark: false },
+  { id: 'dark',     label: 'Dark',     desc: 'indigo midnight',    swatch: '#0b0d14',  dark: true  },
+  { id: 'midnight', label: 'Midnight', desc: 'lavender mocha',     swatch: '#1e1e2e',  dark: true  },
+  { id: 'ocean',    label: 'Ocean',    desc: 'deep blue darcula',  swatch: '#1c2333',  dark: true  },
+  { id: 'forest',   label: 'Forest',   desc: 'warm gruvbox green', swatch: '#1d2021',  dark: true  },
+  { id: 'dawn',     label: 'Dawn',     desc: 'amber solarized',    swatch: '#fdf6e3',  dark: false },
+  { id: 'slate',    label: 'Slate',    desc: 'neutral vs code',    swatch: '#1e1e1e',  dark: true  },
 ];
 
 const ACCENT: Record<string, string> = {
   light:    '#4f46e5',
+  paper:    '#6a4bf2',
   dark:     '#818cf8',
   midnight: '#cba6f7',
   ocean:    '#64b5f6',
@@ -48,7 +50,7 @@ export default function ThemeToggle() {
   const handleOpen = useCallback(() => {
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      setPanelPos({ top: rect.bottom + 6, left: rect.right - 140 });
+      setPanelPos({ top: rect.bottom + 6, left: Math.max(8, rect.right - 200) });
     }
     setOpen(o => !o);
   }, []);
@@ -90,9 +92,9 @@ export default function ThemeToggle() {
             zIndex: 9999,
             background: 'var(--card-bg)',
             border: '1px solid var(--border)',
-            borderRadius: 10,
+            borderRadius: 12,
             padding: '6px',
-            minWidth: 140,
+            minWidth: 200,
             boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
             display: 'flex',
             flexDirection: 'column',
@@ -131,16 +133,19 @@ export default function ThemeToggle() {
               >
                 {/* Swatch */}
                 <span style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: 4,
+                  width: 16,
+                  height: 16,
+                  borderRadius: 5,
                   background: `linear-gradient(135deg, ${t.swatch} 50%, ${ACCENT[t.id]} 50%)`,
                   border: '1px solid rgba(128,128,128,0.25)',
                   flexShrink: 0,
                 }} />
-                {t.label}
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, flex: 1 }}>
+                  <span style={{ lineHeight: 1.2 }}>{t.label}</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 400, color: 'var(--muted)', lineHeight: 1.2 }}>{t.desc}</span>
+                </span>
                 {isActive && (
-                  <Check size={11} style={{ marginLeft: 'auto', flexShrink: 0, color: 'var(--accent)' }} />
+                  <Check size={12} style={{ marginLeft: 'auto', flexShrink: 0, color: 'var(--accent)' }} />
                 )}
               </button>
             );

@@ -7,7 +7,7 @@ import gsap from 'gsap';
 import Image from 'next/image';
 import { ChevronRight, Search, ArrowLeft, Map, ExternalLink, Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, FileText, RotateCcw, Sparkles, Flame, Target, Zap, type LucideIcon } from 'lucide-react';
 import type { NavItem } from '@/lib/docs';
-import { getRecent } from '@/lib/progress';
+import { getRecent, getCompletedCountBySection, COMPLETED_EVENT } from '@/lib/progress';
 import ThemeToggle from './ThemeToggle';
 import NotebookToggle from './NotebookToggle';
 
@@ -228,6 +228,7 @@ function SpecialNav() {
 // ─── Home view: flat list of all sections ────────────────────────────────────
 
 function AllSectionsNav({ nav, pathname }: { nav: NavItem[]; pathname: string }) {
+  const version = useCompletedVersion();
   return (
     <nav className="flex-1 px-2 pt-2 pb-3 overflow-y-auto">
       <div className="px-1 pb-1">
@@ -241,6 +242,10 @@ function AllSectionsNav({ nav, pathname }: { nav: NavItem[]; pathname: string })
         // First leaf page in this section for the href
         const href = getFirstHref(section);
         const isActive = pathname.startsWith('/' + slug0);
+        void version;
+        const total = countLeaves(section);
+        const completed = getCompletedCountBySection(slug0);
+        const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
         return (
           <Link
@@ -250,7 +255,12 @@ function AllSectionsNav({ nav, pathname }: { nav: NavItem[]; pathname: string })
             style={{ color: isActive ? 'var(--sidebar-active-text)' : 'var(--muted)' }}
           >
             <Icon size={13} className="shrink-0" style={{ color: 'var(--accent)', opacity: 0.75 }} />
-            <span className="truncate font-medium">{section.title}</span>
+            <span className="truncate font-medium flex-1">{section.title}</span>
+            {completed > 0 && (
+              <span className="shrink-0 text-[10px] tabular-nums" style={{ color: pct >= 100 ? 'var(--success)' : 'var(--muted)' }} title={`${completed}/${total} completed`}>
+                {pct}%
+              </span>
+            )}
           </Link>
         );
       })}
@@ -273,6 +283,11 @@ function SectionNav({
   const Icon = SECTION_ICONS[slug0] ?? FileText;
   const crossTopicRecents = recentPages.filter(page => !page.slug.startsWith(slug0 + '/')).slice(0, 3);
 
+  const version = useCompletedVersion();
+  const totalLeaves = countLeaves(section);
+  const completed = (() => { void version; return getCompletedCountBySection(slug0); })();
+  const pct = totalLeaves > 0 ? Math.round((completed / totalLeaves) * 100) : 0;
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Back to all topics */}
@@ -293,7 +308,16 @@ function SectionNav({
         style={{ backgroundColor: 'var(--sidebar-active)', color: 'var(--fg)' }}
       >
         <Icon size={14} className="shrink-0" style={{ color: 'var(--accent)' }} />
-        <span className="font-semibold text-xs leading-tight truncate">{section.title}</span>
+        <span className="font-semibold text-xs leading-tight truncate flex-1">{section.title}</span>
+        {completed > 0 && (
+          <span
+            className="flex items-center gap-1.5 shrink-0"
+            title={`${completed} of ${totalLeaves} pages completed`}
+          >
+            <span className="text-[10px] tabular-nums" style={{ color: 'var(--muted)' }}>{pct}%</span>
+            <CompletionRing pct={pct} />
+          </span>
+        )}
       </div>
 
       {/* Nav tree — only this section */}
@@ -401,6 +425,49 @@ function NavNode({ item, pathname, depth }: { item: NavItem; pathname: string; d
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Completion helpers ──────────────────────────────────────────────────────
+
+/** Bumps a counter on every completion change so consumers recompute live. */
+function useCompletedVersion(): number {
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setVersion(v => v + 1);
+    bump();
+    window.addEventListener(COMPLETED_EVENT, bump);
+    return () => window.removeEventListener(COMPLETED_EVENT, bump);
+  }, []);
+  return version;
+}
+
+function countLeaves(item: NavItem): number {
+  if (!item.children) return 1;
+  return item.children.reduce((sum, child) => sum + countLeaves(child), 0);
+}
+
+function CompletionRing({ pct, size = 18 }: { pct: number; size?: number }) {
+  const r = (size - 3) / 2;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - Math.min(100, pct) / 100);
+  const done = pct >= 100;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0" style={{ transform: 'rotate(-90deg)' }} aria-hidden>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={2} />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={done ? 'var(--success)' : 'var(--accent)'}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+      />
+    </svg>
   );
 }
 
