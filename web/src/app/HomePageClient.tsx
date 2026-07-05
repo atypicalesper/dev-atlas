@@ -11,6 +11,7 @@ import { useNotebook } from '@/lib/notebook';
 import { getSrsStats } from '@/lib/srs';
 import RoughBorder from '@/components/RoughBorder';
 import ShareProgressCard from '@/components/ShareProgressCard';
+import TopicOfTheDay from '@/components/TopicOfTheDay';
 import type { DocSummary } from '@/lib/docs';
 
 const SECTIONS: { icon: LucideIcon; title: string; slug: string; desc: string; badge?: string }[] = [
@@ -272,6 +273,10 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
 
       </div>{/* end hero */}
 
+      <div className="mb-10">
+        <TopicOfTheDay doc={featuredDoc} />
+      </div>
+
       <SectionHeading
         eyebrow="Continue learning"
         title="Pick up your momentum"
@@ -503,19 +508,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
         description="A smaller, more intentional set of ways to explore instead of one long homepage feed."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 mb-10">
-        <Link
-          href={`/${featuredDoc.slug.join('/')}`}
-          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
-          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-        >
-          <div className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--accent)' }}>
-            Today in Atlas
-          </div>
-          <div className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>{featuredDoc.title}</div>
-          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{featuredDoc.excerpt}</div>
-        </Link>
-
+      <div className="grid grid-cols-1 gap-4 mb-10">
         <div
           className="rounded-2xl border p-5"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
@@ -523,7 +516,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
           <div className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted)' }}>
             Challenge Mode
           </div>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {challengeDocs.map(doc => (
               <Link
                 key={doc.href}
