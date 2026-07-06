@@ -99,7 +99,7 @@ export default function Shell({ nav, searchIndex, children }: Props) {
           </button>
           <span className="flex items-center gap-2 flex-1 min-w-0">
             <Image src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.svg`} alt="logo" width={24} height={24} className="logo-img object-contain shrink-0" unoptimized />
-            <span className="text-sm font-semibold truncate" style={{ color: 'var(--fg)' }}>dev <span style={{ color: 'var(--accent)' }}>atlas</span></span>
+            <span className="wordmark text-base truncate" style={{ color: 'var(--fg)' }}>dev <span style={{ color: 'var(--accent)' }}>atlas</span></span>
           </span>
           <button
             onClick={() => setSearchOpen(true)}

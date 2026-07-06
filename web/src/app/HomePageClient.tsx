@@ -222,7 +222,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
           />
           <div className="relative flex items-center gap-4">
             <Image src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.svg`} alt="logo" width={72} height={72} className="logo-img object-contain shrink-0 drop-shadow-lg" unoptimized />
-            <h1 className="text-4xl font-bold hero-title">
+            <h1 className="text-5xl hero-title">
               dev <span style={{ color: 'var(--accent)' }}>atlas</span>
             </h1>
           </div>

@@ -53,7 +53,7 @@ export default function ShareProgressCard({ streak, pagesRead, bookmarks, topSki
 
       try {
         await Promise.all([
-          document.fonts.load('600 40px Fraunces'),
+          document.fonts.load('500 46px Fraunces'),
           document.fonts.load('600 150px Fraunces'),
           document.fonts.load('400 22px Inter'),
         ]);
@@ -78,7 +78,7 @@ export default function ShareProgressCard({ streak, pagesRead, bookmarks, topSki
       // Wordmark
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
-      ctx.font = '600 44px Fraunces, Georgia, serif';
+      ctx.font = '500 46px Fraunces, Georgia, serif';
       ctx.fillStyle = fg;
       ctx.fillText('dev ', 84, 138);
       const devWidth = ctx.measureText('dev ').width;

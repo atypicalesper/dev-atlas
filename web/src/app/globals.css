@@ -507,15 +507,22 @@ body {
   filter: invert(1);
 }
 
-/* ── Hero gradient text ──────────────────────────────────────────────────────── */
+/* ── Hero wordmark (editorial — matches atypicalesper emblem) ─────────────────── */
 .hero-title {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  letter-spacing: 0.005em;
   background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ── Editorial wordmark (sidebar + mobile bar) ───────────────────────────────── */
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.005em;
 }
 
 /* ── Editorial section headings (homepage) ───────────────────────────────────── */
