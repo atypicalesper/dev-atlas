@@ -65,7 +65,7 @@ export default function Sidebar({ nav, onSearchOpen }: Props) {
             alt="logo" width={26} height={26}
             className="logo-img object-contain shrink-0" unoptimized
           />
-          <span className="font-semibold text-xs leading-tight" style={{ color: 'var(--fg)' }}>
+          <span className="wordmark text-base leading-tight" style={{ color: 'var(--fg)' }}>
             dev <span style={{ color: 'var(--accent)' }}>atlas</span>
           </span>
         </Link>

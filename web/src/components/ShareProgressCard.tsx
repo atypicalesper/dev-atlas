@@ -53,9 +53,9 @@ export default function ShareProgressCard({ streak, pagesRead, bookmarks, topSki
 
       try {
         await Promise.all([
-          document.fonts.load('600 40px Fraunces'),
+          document.fonts.load('500 46px Fraunces'),
           document.fonts.load('600 150px Fraunces'),
-          document.fonts.load('400 22px Inter'),
+          document.fonts.load('400 22px "Work Sans"'),
         ]);
       } catch {
         /* fonts may already be loaded or unavailable; canvas falls back to serif/sans */
@@ -78,13 +78,13 @@ export default function ShareProgressCard({ streak, pagesRead, bookmarks, topSki
       // Wordmark
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
-      ctx.font = '600 44px Fraunces, Georgia, serif';
+      ctx.font = '500 46px Fraunces, Georgia, serif';
       ctx.fillStyle = fg;
       ctx.fillText('dev ', 84, 138);
       const devWidth = ctx.measureText('dev ').width;
       ctx.fillStyle = accent;
       ctx.fillText('atlas', 84 + devWidth, 138);
-      ctx.font = '400 22px Inter, sans-serif';
+      ctx.font = '400 22px "Work Sans", sans-serif';
       ctx.fillStyle = muted;
       ctx.fillText('my developer knowledge-base progress', 86, 172);
 
@@ -92,7 +92,7 @@ export default function ShareProgressCard({ streak, pagesRead, bookmarks, topSki
       ctx.font = '600 156px Fraunces, Georgia, serif';
       ctx.fillStyle = accent;
       ctx.fillText(String(streak), 80, 400);
-      ctx.font = '400 32px Inter, sans-serif';
+      ctx.font = '400 32px "Work Sans", sans-serif';
       ctx.fillStyle = fg;
       ctx.fillText(streak === 1 ? 'day streak' : 'day streak', 88, 448);
 
@@ -108,14 +108,14 @@ export default function ShareProgressCard({ streak, pagesRead, bookmarks, topSki
         ctx.font = '600 60px Fraunces, Georgia, serif';
         ctx.fillStyle = fg;
         ctx.fillText(value, W - 84, y);
-        ctx.font = '400 22px Inter, sans-serif';
+        ctx.font = '400 22px "Work Sans", sans-serif';
         ctx.fillStyle = muted;
         ctx.fillText(label, W - 84, y + 32);
         y += 108;
       }
 
       ctx.textAlign = 'left';
-      ctx.font = '400 20px Inter, sans-serif';
+      ctx.font = '400 20px "Work Sans", sans-serif';
       ctx.fillStyle = muted;
       ctx.fillText('atypicalesper.github.io/dev-atlas', 84, H - 72);
 

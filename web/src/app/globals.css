@@ -1,5 +1,5 @@
 /* ── Fonts ─────────────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Work+Sans:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap');
 
 @tailwind base;
@@ -14,6 +14,7 @@ html {
 /* ── CSS custom properties ──────────────────────────────────────────────────── */
 :root {
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Work Sans', system-ui, -apple-system, sans-serif;
   --bg: #fafafa;
   --fg: #0f1117;
   --sidebar-bg: #f4f5f7;
@@ -182,7 +183,7 @@ html {
 body {
   background-color: var(--bg);
   color: var(--fg);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -507,15 +508,22 @@ body {
   filter: invert(1);
 }
 
-/* ── Hero gradient text ──────────────────────────────────────────────────────── */
+/* ── Hero wordmark (editorial — matches atypicalesper emblem) ─────────────────── */
 .hero-title {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  letter-spacing: 0.005em;
   background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ── Editorial wordmark (sidebar + mobile bar) ───────────────────────────────── */
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.005em;
 }
 
 /* ── Editorial section headings (homepage) ───────────────────────────────────── */

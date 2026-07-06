@@ -12,6 +12,7 @@ const config: Config = {
         },
       },
       fontFamily: {
+        sans: ['Work Sans', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Cascadia Code', 'monospace'],
       },
     },
