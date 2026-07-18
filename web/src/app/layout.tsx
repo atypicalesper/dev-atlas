@@ -11,7 +11,8 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 const clarityScriptSrc = CLARITY_ID ? ' https://*.clarity.ms' : '';
 const clarityConnectSrc = CLARITY_ID ? ' https://*.clarity.ms https://c.bing.com' : '';
-const CSP = `default-src 'none'; script-src 'self' 'unsafe-inline'${clarityScriptSrc}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'${clarityConnectSrc}; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'`;
+const clarityImgSrc = CLARITY_ID ? ' https://*.clarity.ms https://c.bing.com' : '';
+const CSP = `default-src 'none'; script-src 'self' 'unsafe-inline'${clarityScriptSrc}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:${clarityImgSrc}; font-src 'self' https://fonts.gstatic.com; connect-src 'self'${clarityConnectSrc}; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'`;
 
 const SITE_URL = 'https://atypicalesper.github.io/dev-atlas';
 
