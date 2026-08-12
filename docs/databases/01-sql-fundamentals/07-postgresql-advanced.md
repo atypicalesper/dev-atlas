@@ -75,6 +75,29 @@ EXPLAIN (ANALYZE, FORMAT JSON) SELECT ...;
 
 Good for: equality, range queries, ORDER BY, <, >, BETWEEN, LIKE 'foo%'
 
+Every lookup starts at the root and walks down a fixed number of levels — which is why an indexed lookup stays fast as the table grows. Leaf nodes are linked, so a range scan walks sideways instead of returning to the root:
+
+```mermaid
+flowchart TD
+    R["Root<br/>[50 | 100]"]
+    I1["[10 | 30]"]
+    I2["[60 | 80]"]
+    I3["[120 | 150]"]
+    L1["1..10"]
+    L2["11..30"]
+    L3["51..60"]
+    L4["61..80"]
+    L5["101..120"]
+    L6["121..150"]
+    R -->|"< 50"| I1
+    R -->|"50–100"| I2
+    R -->|"> 100"| I3
+    I1 --> L1 & L2
+    I2 --> L3 & L4
+    I3 --> L5 & L6
+    L1 -.linked.-> L2 -.-> L3 -.-> L4 -.-> L5 -.-> L6
+```
+
 ```sql
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_created ON orders(created_at DESC); -- direction matters for ORDER BY

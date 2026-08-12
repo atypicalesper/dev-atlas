@@ -45,6 +45,9 @@ export async function generateStaticParams() {
 }
 
 const SITE_URL = 'https://atypicalesper.github.io/dev-atlas';
+// Declaring openGraph on a page replaces the layout's, so the card image has to
+// be repeated here or every doc page shares as a bare text link.
+const OG_IMAGE = { url: `${SITE_URL}/og.png`, width: 1200, height: 630, alt: 'dev atlas — the complete developer knowledge base' };
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
@@ -56,8 +59,8 @@ export async function generateMetadata({ params }: PageProps) {
       title: doc.title,
       description,
       alternates: { canonical },
-      openGraph: { title: `${doc.title} — dev atlas`, description, url: canonical },
-      twitter:   { title: `${doc.title} — dev atlas`, description },
+      openGraph: { title: `${doc.title} — dev atlas`, description, url: canonical, images: [OG_IMAGE] },
+      twitter:   { card: 'summary_large_image' as const, title: `${doc.title} — dev atlas`, description, images: [OG_IMAGE.url] },
     };
   }
   const dir = getDirInfo(slug);
@@ -67,8 +70,8 @@ export async function generateMetadata({ params }: PageProps) {
       title: dir.title,
       description,
       alternates: { canonical },
-      openGraph: { title: `${dir.title} — dev atlas`, description, url: canonical },
-      twitter:   { title: `${dir.title} — dev atlas`, description },
+      openGraph: { title: `${dir.title} — dev atlas`, description, url: canonical, images: [OG_IMAGE] },
+      twitter:   { card: 'summary_large_image' as const, title: `${dir.title} — dev atlas`, description, images: [OG_IMAGE.url] },
     };
   }
   return { title: 'Not Found' };
@@ -201,7 +204,7 @@ export default async function DocPage({ params }: PageProps) {
           </div>
 
           {/* Markdown content */}
-          <MarkdownContent markdown={doc.content} />
+          <MarkdownContent markdown={doc.content} slug={slug} />
           <NotebookProseDecor />
           <PredictTheOutput
             blocks={predictBlocks}

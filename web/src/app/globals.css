@@ -146,12 +146,12 @@ html {
   --sidebar-border: #e8d8c4;
   --sidebar-hover: #ede3d4;
   --sidebar-active: #e8d8c4;
-  --sidebar-active-text: #c4621f;
+  --sidebar-active-text: #a84d14;
   --code-bg: #2a1f14;
-  --accent: #c4621f;
-  --accent-hover: #a84d14;
-  --accent-glow: rgba(196, 98, 31, 0.1);
-  --accent-rgb: 196, 98, 31;
+  --accent: #a84d14;
+  --accent-hover: #8f3f0e;
+  --accent-glow: rgba(168, 77, 20, 0.1);
+  --accent-rgb: 168, 77, 20;
   --muted: #7a6652;
   --border: #e0d0bc;
   --card-bg: #f5ede0;
@@ -238,6 +238,25 @@ body {
 .prose ol,
 .prose blockquote {
   max-width: 62ch;
+}
+
+.mermaid-diagram {
+  margin: 1.75rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card-bg);
+  overflow-x: auto;
+}
+.mermaid-diagram svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+/* Before hydration the block is empty — avoid a bare bordered box */
+.mermaid-diagram:empty {
+  display: none;
 }
 .prose h1, .prose h2, .prose h3, .prose h4 {
   color: var(--fg);

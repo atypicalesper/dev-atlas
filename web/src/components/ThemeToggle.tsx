@@ -30,8 +30,14 @@ export default function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
+  const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+
+  // next-themes resolves the theme from localStorage before the first client
+  // render, so without this the client renders the real button against a
+  // server-rendered placeholder and hydration fails for the whole tree.
+  useEffect(() => { setMounted(true); }, []);
 
   // Close on outside click or scroll
   useEffect(() => {
@@ -55,8 +61,10 @@ export default function ThemeToggle() {
     setOpen(o => !o);
   }, []);
 
-  // resolvedTheme is undefined until client-side JS runs
-  if (!resolvedTheme) return <div className="theme-toggle-btn" aria-hidden />;
+  // Same element and class as the real control so the markup matches
+  if (!mounted || !resolvedTheme) {
+    return <button className="theme-toggle-btn" aria-label="Change theme" disabled />;
+  }
 
   const current = THEMES.find(t => t.id === resolvedTheme) ?? THEMES[1];
 

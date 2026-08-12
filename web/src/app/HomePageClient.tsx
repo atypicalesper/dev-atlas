@@ -546,7 +546,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4 mb-10">
         <Link
           href={`/${surpriseDoc.slug.join('/')}`}
-          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md lg:self-start"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>

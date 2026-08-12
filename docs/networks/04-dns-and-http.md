@@ -47,10 +47,22 @@ Recursive resolver      → (your ISP or 8.8.8.8)
 Recursive resolver caches result (TTL) → returns to client
 ```
 
-```
-Client → Recursive Resolver → Root NS → TLD NS → Authoritative NS
-                           ←──────────────────────────────────────
-                                        answer + TTL
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant R as Recursive resolver<br/>(8.8.8.8)
+    participant Root as Root NS (.)
+    participant TLD as .com TLD NS
+    participant Auth as github.com<br/>authoritative NS
+    B->>R: www.github.com — A?
+    R->>Root: www.github.com — A?
+    Root-->>R: Referral: ask the .com TLD servers
+    R->>TLD: www.github.com — A?
+    TLD-->>R: Referral: ask github.com's NS
+    R->>Auth: www.github.com — A?
+    Auth-->>R: 140.82.121.4 (authoritative)
+    Note over R: Caches the answer for its TTL
+    R-->>B: 140.82.121.4
 ```
 
 ### DNS Record Types

@@ -7,15 +7,14 @@ import { Menu, Search as SearchIcon, PanelLeftClose, PanelLeftOpen } from 'lucid
 import Sidebar from './Sidebar';
 import Search from './Search';
 import KeyboardShortcuts from './KeyboardShortcuts';
-import type { NavItem, SearchItem } from '@/lib/docs';
+import type { NavItem } from '@/lib/docs';
 
 interface Props {
   nav: NavItem[];
-  searchIndex: SearchItem[];
   children: React.ReactNode;
 }
 
-export default function Shell({ nav, searchIndex, children }: Props) {
+export default function Shell({ nav, children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);       // mobile drawer
   const [collapsed, setCollapsed] = useState(false);           // desktop collapse
   const [searchOpen, setSearchOpen] = useState(false);
@@ -58,7 +57,7 @@ export default function Shell({ nav, searchIndex, children }: Props) {
       {isSpecialPage ? (
         <>
           <main id="main-content" className="flex-1 min-w-0">{children}</main>
-          {searchOpen && <Search index={searchIndex} onClose={() => setSearchOpen(false)} />}
+          {searchOpen && <Search onClose={() => setSearchOpen(false)} />}
           <KeyboardShortcuts />
         </>
       ) : (
@@ -126,7 +125,7 @@ export default function Shell({ nav, searchIndex, children }: Props) {
         <main id="main-content" className="flex-1">{children}</main>
       </div>
 
-      {searchOpen && <Search index={searchIndex} onClose={() => setSearchOpen(false)} />}
+      {searchOpen && <Search onClose={() => setSearchOpen(false)} />}
       <KeyboardShortcuts />
         </>
       )}

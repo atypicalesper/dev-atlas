@@ -116,6 +116,18 @@ The real-world model used by the internet. Collapses OSI 5+6+7 into one and 1+2 
 
 Encapsulation is the mechanism by which each network layer adds its own header (and sometimes trailer) to the data it receives from the layer above, creating a nested structure of headers-within-headers. The payload of each layer is opaque to the layers below it — IP does not know or care that the data inside its packet is a TCP segment carrying an HTTP request. This layering is what makes the internet composable: you can swap Ethernet for Wi-Fi at layer 2 without changing anything at layers 3 through 7. De-encapsulation at the receiving end strips each header in reverse order, delivering the original application data to the process that needs it.
 
+```mermaid
+flowchart TD
+    A["Application — HTTP request<br/>[HTTP header + body]"]
+    B["Transport — TCP segment<br/>[TCP header | HTTP data]<br/>src port 54231 → dst port 443"]
+    C["Network — IP packet<br/>[IP header | TCP segment]<br/>192.168.1.5 → 93.184.216.34"]
+    D["Data Link — Ethernet frame<br/>[Eth header | IP packet | Eth trailer]<br/>src MAC → gateway MAC"]
+    E["Physical — signals<br/>01001000 01001001 ..."]
+    A -->|encapsulate| B -->|encapsulate| C -->|encapsulate| D -->|encapsulate| E
+```
+
+The same structure written out, header by header:
+
 ```
 You type: https://example.com
 

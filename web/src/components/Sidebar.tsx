@@ -242,9 +242,10 @@ function AllSectionsNav({ nav, pathname }: { nav: NavItem[]; pathname: string })
         // First leaf page in this section for the href
         const href = getFirstHref(section);
         const isActive = pathname.startsWith('/' + slug0);
-        void version;
         const total = countLeaves(section);
-        const completed = getCompletedCountBySection(slug0);
+        // version is 0 until after mount — reading localStorage during the first
+        // render would not match the server output and breaks hydration
+        const completed = version > 0 ? getCompletedCountBySection(slug0) : 0;
         const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
         return (
@@ -285,7 +286,7 @@ function SectionNav({
 
   const version = useCompletedVersion();
   const totalLeaves = countLeaves(section);
-  const completed = (() => { void version; return getCompletedCountBySection(slug0); })();
+  const completed = version > 0 ? getCompletedCountBySection(slug0) : 0;
   const pct = totalLeaves > 0 ? Math.round((completed / totalLeaves) * 100) : 0;
 
   return (
