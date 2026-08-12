@@ -190,7 +190,7 @@ export default async function DocPage({ params }: PageProps) {
                 <Clock size={11} />
                 {readingTime(doc.content)}
               </span>
-              <span className="reading-badge">
+              <span className="reading-badge !hidden sm:!inline-flex">
                 <Zap size={11} />
                 {readingVibe(doc.content)}
               </span>

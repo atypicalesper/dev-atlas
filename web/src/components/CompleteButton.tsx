@@ -30,10 +30,11 @@ export default function CompleteButton({ href }: Props) {
         color: done ? 'var(--success)' : 'var(--fg)',
       }}
       aria-pressed={done}
+      aria-label={done ? 'Completed' : 'Mark complete'}
       title={done ? 'Mark as not done' : 'Mark this page as complete'}
     >
       <CircleCheck size={13} fill={done ? 'currentColor' : 'none'} stroke={done ? 'var(--card-bg)' : 'currentColor'} />
-      {done ? 'Completed' : 'Mark complete'}
+      <span className="hidden sm:inline">{done ? 'Completed' : 'Mark complete'}</span>
     </button>
   );
 }

@@ -230,6 +230,14 @@ body {
 .prose {
   color: var(--fg);
   max-width: none;
+  font-size: 1.0625rem;
+}
+/* Constrain running text to a comfortable measure; code, tables and images stay full width */
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote {
+  max-width: 62ch;
 }
 .prose h1, .prose h2, .prose h3, .prose h4 {
   color: var(--fg);
