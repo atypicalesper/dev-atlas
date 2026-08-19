@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { inferDifficulty, inferDocSkills, type Difficulty } from './learning';
+import type { CompactDoc, CompactHeading, CompactSearchIndex } from './search-index';
 
 // Absolute path to the markdown content directory
 const DOCS_ROOT = path.join(process.cwd(), '..', 'docs');
@@ -9,7 +10,7 @@ const docCache = new Map<string, { content: string; title: string } | null>();
 const dirCache = new Map<string, DirInfo | null>();
 let allDocSlugsCache: string[][] | null = null;
 let allDirSlugsCache: string[][] | null = null;
-let searchIndexCache: SearchItem[] | null = null;
+let searchIndexCache: CompactSearchIndex | null = null;
 let docSummariesCache: DocSummary[] | null = null;
 
 export interface Heading {
@@ -292,36 +293,31 @@ export function extractExcerpt(markdown: string, maxLength = 155): string {
 }
 
 /** Build a flat search index of all docs for client-side search */
-export function buildSearchIndex(): SearchItem[] {
+export function buildSearchIndex(): CompactSearchIndex {
   if (searchIndexCache) return searchIndexCache;
 
-  const slugs = getAllDocSlugs();
-  const items: SearchItem[] = [];
+  const docs: CompactDoc[] = [];
+  const headings: CompactHeading[] = [];
 
-  for (const slug of slugs) {
+  for (const slug of getAllDocSlugs()) {
     const doc = getDocContent(slug)!;
-    const section = slug[0] ? humanize(slug[0]) : '';
-    const pathLabel = slug.map(part => humanize(part)).join(' / ');
-    const excerpt = extractExcerpt(doc.content, 220);
-    const kind = getDocKind(slug);
+    const docIndex = docs.length;
 
-    items.push({ title: doc.title, slug, excerpt, section, path: pathLabel, kind });
+    docs.push([
+      doc.title,
+      slug.join('/'),
+      extractExcerpt(doc.content, 220),
+      slug[0] ? humanize(slug[0]) : '',
+      slug.map(part => humanize(part)).join(' / '),
+      getDocKind(slug),
+    ]);
 
     for (const heading of extractHeadings(doc.content)) {
-      items.push({
-        title: doc.title,
-        slug,
-        excerpt: heading.text,
-        section,
-        path: pathLabel,
-        kind,
-        headingId: heading.id,
-        headingText: heading.text,
-      });
+      headings.push([docIndex, heading.text, heading.id]);
     }
   }
 
-  searchIndexCache = items;
+  searchIndexCache = { docs, headings };
   return searchIndexCache;
 }
 

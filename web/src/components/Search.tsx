@@ -8,11 +8,29 @@ import { Search as SearchIcon, X, ArrowRight, Clock, Hash, TrendingUp, Shuffle, 
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import type { SearchItem } from '@/lib/docs';
+import { expandSearchIndex, type CompactSearchIndex } from '@/lib/search-index';
 import { getBookmarks, toggleBookmark } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
 
+// Fetched once per session, then reused across dialog opens
+let indexCache: SearchItem[] | null = null;
+let indexPromise: Promise<SearchItem[]> | null = null;
+
+function loadSearchIndex(): Promise<SearchItem[]> {
+  if (indexCache) return Promise.resolve(indexCache);
+  if (!indexPromise) {
+    const base = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    indexPromise = fetch(`${base}/search-index.json`)
+      .then(res => res.json())
+      .then((data: CompactSearchIndex) => {
+        indexCache = expandSearchIndex(data);
+        return indexCache;
+      });
+  }
+  return indexPromise;
+}
+
 interface Props {
-  index: SearchItem[];
   onClose: () => void;
 }
 
@@ -102,6 +120,41 @@ function itemHref(item: SearchItem): string {
   return item.headingId ? `${base}#${item.headingId}` : base;
 }
 
+/** Bounded edit distance — returns maxDist + 1 as soon as it is exceeded. */
+function editDistance(a: string, b: string, maxDist: number): number {
+  if (Math.abs(a.length - b.length) > maxDist) return maxDist + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + cost);
+      if (row[j] < best) best = row[j];
+    }
+    if (best > maxDist) return maxDist + 1;
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/** Typo tolerance: 1 edit for short words, 2 for longer ones. */
+function fuzzyMatches(token: string, text: string): boolean {
+  if (token.length < 4) return false;
+  const maxDist = token.length >= 8 ? 2 : 1;
+  for (const word of text.split(/[^a-z0-9]+/)) {
+    if (word.length < 3) continue;
+    if (editDistance(token, word, maxDist) <= maxDist) return true;
+  }
+  return false;
+}
+
+/** "eventloop" should still find "event loop". */
+function matchesIgnoringSeparators(token: string, text: string): boolean {
+  if (token.length < 6) return false;
+  return text.replace(/[^a-z0-9]+/g, '').includes(token);
+}
+
 function matchItems(query: string, items: SearchItem[]): SearchItem[] {
   const parsed = parseQuery(query);
   const q = parsed.text;
@@ -134,6 +187,11 @@ function matchItems(query: string, items: SearchItem[]): SearchItem[] {
         if (heading.includes(token)) points += 20;
       }
       if (title.includes(q)) points += 20;
+      // Fall back to forgiving matches only when nothing matched exactly
+      if (points === 0) {
+        if (matchesIgnoringSeparators(q, heading)) points += 30;
+        else if (tokens.every(token => fuzzyMatches(token, heading))) points += 14;
+      }
       // Slightly penalise heading items so exact title matches surface first
       points = Math.max(0, points - 5);
     } else {
@@ -151,6 +209,13 @@ function matchItems(query: string, items: SearchItem[]): SearchItem[] {
       }
       if (tokens.every(token => title.includes(token) || path.includes(token) || excerpt.includes(token))) {
         points += 24;
+      }
+      // Fall back to forgiving matches only when nothing matched exactly
+      if (points === 0) {
+        if (matchesIgnoringSeparators(q, title)) points += 40;
+        else if (matchesIgnoringSeparators(q, path)) points += 22;
+        else if (tokens.every(token => fuzzyMatches(token, title))) points += 18;
+        else if (tokens.every(token => fuzzyMatches(token, path))) points += 10;
       }
     }
 
@@ -194,7 +259,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-export default function Search({ index, onClose }: Props) {
+export default function Search({ onClose }: Props) {
   const router = useRouter();
   const { setTheme } = useTheme();
   const { notebook, toggleNotebook } = useNotebook();
@@ -203,6 +268,7 @@ export default function Search({ index, onClose }: Props) {
   const [selected, setSelected] = useState(0);
   const [recents, setRecents]   = useState<string[]>([]);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const [index, setIndex]       = useState<SearchItem[]>(() => indexCache ?? []);
   const inputRef    = useRef<HTMLInputElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef    = useRef<HTMLDivElement>(null);
@@ -215,6 +281,7 @@ export default function Search({ index, onClose }: Props) {
   useEffect(() => {
     setRecents(loadRecentSearches());
     setBookmarks(getBookmarks());
+    if (!indexCache) loadSearchIndex().then(setIndex);
   }, []);
   useEffect(() => { inputRef.current?.focus(); }, []);
 
@@ -566,6 +633,12 @@ export default function Search({ index, onClose }: Props) {
                 </ul>
               </>
             )}
+          </div>
+
+        ) : query && !isCommandMode && index.length === 0 ? (
+          /* Index still in flight — not the same thing as no matches */
+          <div className="px-4 py-6 text-center">
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>Loading search index…</p>
           </div>
 
         ) : query ? (

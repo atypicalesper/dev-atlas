@@ -199,6 +199,24 @@ The Authorization Code Flow is the most secure and recommended grant type for se
    { access_token, refresh_token, id_token (OIDC), expires_in }
 ```
 
+```mermaid
+sequenceDiagram
+    participant U as User (browser)
+    participant A as Your app
+    participant G as Auth server<br/>(Google)
+    U->>A: Clicks "Sign in with Google"
+    A-->>U: 302 → /authorize?client_id&state&code_challenge
+    U->>G: Follows redirect, logs in, grants consent
+    G-->>U: 302 → /callback?code=AUTH_CODE&state
+    U->>A: GET /callback?code=AUTH_CODE&state
+    Note over A: Verifies state matches<br/>the value it issued
+    rect rgb(60, 70, 100)
+    A->>G: POST /token (code + client_secret + code_verifier)
+    G-->>A: access_token, refresh_token, id_token
+    end
+    Note over A,G: Back channel — server to server.<br/>The token never touches the browser.
+```
+
 **Why code instead of returning token directly?** Auth code is short-lived (10 min), single-use, and the actual token exchange happens server-side with client_secret — never exposed to browser.
 
 ### PKCE (Proof Key for Code Exchange)

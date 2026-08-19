@@ -30,10 +30,11 @@ export default function FavoriteButton({ href }: Props) {
         color: saved ? 'var(--sidebar-active-text)' : 'var(--fg)',
       }}
       aria-pressed={saved}
+      aria-label={saved ? 'Bookmarked' : 'Bookmark'}
       title={saved ? 'Remove bookmark' : 'Save to bookmarks'}
     >
       <Heart size={13} fill={saved ? 'currentColor' : 'none'} />
-      {saved ? 'Bookmarked' : 'Bookmark'}
+      <span className="hidden sm:inline">{saved ? 'Bookmarked' : 'Bookmark'}</span>
     </button>
   );
 }

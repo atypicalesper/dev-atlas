@@ -3,3 +3,4 @@ web/node_modules/
 web/.next/
 web/out/
 .claude/settings.local.json
+.playwright-mcp/

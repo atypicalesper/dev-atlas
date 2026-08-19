@@ -12,16 +12,20 @@ TCP guarantees delivery, order, and error detection. It does this by adding over
 
 Before any data can flow, TCP requires both sides to agree on starting sequence numbers — random numbers that identify the position of each byte in the data stream and enable the receiver to detect gaps, duplicates, and reordering. The three-way handshake accomplishes this synchronization in one round trip and also confirms that both sides are reachable and willing to communicate. The choice of random initial sequence numbers (rather than starting at 0) prevents stale packets from a previous connection on the same port from being accepted as valid data in a new connection.
 
-```
-Client                          Server
-  |                               |
-  |── SYN (seq=100) ─────────────>|  "I want to connect, my seq starts at 100"
-  |                               |
-  |<─ SYN-ACK (seq=300, ack=101)─|  "OK, my seq starts at 300, I got your 100"
-  |                               |
-  |── ACK (ack=301) ─────────────>|  "Got it. Connection open."
-  |                               |
-  |     [DATA TRANSFER]           |
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: SYN (seq=100)
+    Note right of C: "I want to connect,<br/>my seq starts at 100"
+    S->>C: SYN-ACK (seq=300, ack=101)
+    Note left of S: "OK, my seq starts at 300,<br/>I got your 100"
+    C->>S: ACK (ack=301)
+    Note right of C: "Got it. Connection open."
+    rect rgb(60, 70, 100)
+    C->>S: DATA TRANSFER
+    S->>C: DATA TRANSFER
+    end
 ```
 
 - **SYN** — synchronize sequence numbers
@@ -33,12 +37,18 @@ Client                          Server
 
 TCP connections are full-duplex — each direction is independent, and either side can stop sending while still receiving. This is why the teardown requires four steps rather than two: each side must independently close its sending direction with a FIN and receive acknowledgement. A three-way teardown is possible when the server piggybacks its FIN onto its ACK, but the four-way form is more common because the server may still have data to send after acknowledging the client's FIN.
 
-```
-Client                          Server
-  |── FIN ─────────────────────>|  "I'm done sending"
-  |<─ ACK ──────────────────────|  "Got it"
-  |<─ FIN ──────────────────────|  "I'm done too"
-  |── ACK ─────────────────────>|  "Got it — closing"
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: FIN
+    Note right of C: "I'm done sending"
+    S->>C: ACK
+    Note left of S: "Got it"
+    S->>C: FIN
+    Note left of S: "I'm done too"
+    C->>S: ACK
+    Note right of C: TIME_WAIT (2 × MSL)
 ```
 
 Why four steps? Because FIN only closes one direction. Each side closes independently (half-close).

@@ -88,9 +88,12 @@ export default function AddToPathwayButton({ title, href }: Props) {
           backgroundColor: alreadySaved ? 'var(--sidebar-active)' : 'var(--card-bg)',
           color: alreadySaved ? 'var(--sidebar-active-text)' : 'var(--fg)',
         }}
+        aria-label={alreadySaved ? 'Saved in pathway' : 'Add to Pathway'}
       >
         {alreadySaved || justAdded ? <Check size={13} /> : <Route size={13} />}
-        {justAdded ? `Added to ${justAdded}` : alreadySaved ? 'Saved in pathway' : 'Add to Pathway'}
+        <span className="hidden sm:inline">
+          {justAdded ? `Added to ${justAdded}` : alreadySaved ? 'Saved in pathway' : 'Add to Pathway'}
+        </span>
       </button>
 
       {open && (

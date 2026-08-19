@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRef, useState, useLayoutEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, Compass, ArrowRightLeft, RotateCcw, type LucideIcon } from 'lucide-react';
+import { Brain, Server, Layers, Wrench, Database, Cloud, Code2, Bot, Network, ClipboardList, BookOpen, Play, Sparkles, Dice5, Heart, Flame, Trophy, Compass, ArrowRightLeft, RotateCcw, Binary, type LucideIcon } from 'lucide-react';
 import { getVisitedCountBySection, getRecent, getBookmarkCount, getVisitStreak, getVisitedSet, getBookmarks, getTopSkills, getMissedQuizQuestions, getInProgressDocs, type InProgressDoc } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
 import { getSrsStats } from '@/lib/srs';
@@ -37,7 +37,13 @@ const SECTIONS: { icon: LucideIcon; title: string; slug: string; desc: string; b
     icon: Wrench,
     title: 'Engineering',
     slug: 'engineering',
-    desc: 'System design, HLD/LLD, SOLID, microservices, DevOps, Docker, Kubernetes, CI/CD, testing (Jest, E2E), security (OWASP), DSA, algorithms, interview practice, behavioral STAR stories',
+    desc: 'System design, HLD/LLD, SOLID, microservices, DevOps, Docker, Kubernetes, CI/CD, testing (Jest, E2E), security (OWASP), interview practice, behavioral STAR stories',
+  },
+  {
+    icon: Binary,
+    title: 'DSA',
+    slug: 'dsa',
+    desc: 'Big-O, sliding window, two pointers, binary search patterns, trees and graphs, dynamic programming, backtracking, heaps, tries, union-find, monotonic stack, bit manipulation, intervals',
   },
   {
     icon: Database,
@@ -49,7 +55,7 @@ const SECTIONS: { icon: LucideIcon; title: string; slug: string; desc: string; b
     icon: Cloud,
     title: 'Cloud',
     slug: 'cloud',
-    desc: 'AWS core services (IAM, EC2, S3, RDS, Lambda, SQS/SNS, ECS), Terraform, CDK, serverless patterns, Step Functions, EventBridge, DynamoDB, CloudFront, observability, cost optimization',
+    desc: 'AWS core services (EC2, S3, RDS, Lambda), IAM deep dive, DynamoDB data modelling, SQS vs SNS vs EventBridge, ECS vs EKS vs Lambda, Terraform vs CDK, observability and cost debugging',
   },
   {
     icon: Code2,
@@ -174,6 +180,8 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
 
   const { notebook } = useNotebook();
   const totalVisited = Object.values(visitedCounts).reduce((a, b) => a + b, 0);
+  // First-time visitors get no progress dashboard — it would be a wall of zeros
+  const hasHistory = totalVisited > 0 || recentSlug !== null || bookmarkCount > 0 || srsTotal > 0;
   const weakestSections = SECTIONS
     .map(section => {
       const visited = visitedCounts[section.slug] ?? 0;
@@ -233,19 +241,11 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
           The complete developer knowledge base — JavaScript, TypeScript, React, Node.js, Python, AI/ML, system design, DSA, databases, and more.
         </p>
 
-        <div className="flex gap-3 flex-wrap">
-          <Link
-            href="/engineering/12-interview-practice/00-cheat-sheet/01-last-day-reference"
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 hover:shadow-lg inline-flex items-center gap-2"
-            style={{ backgroundColor: 'var(--accent)' }}
-          >
-            <ClipboardList size={14} />
-            Last-Day Cheat Sheet
-          </Link>
+        <div className="flex gap-3 flex-wrap items-center">
           <Link
             href="/javascript/01-javascript-fundamentals/01-event-loop/01-what-is-event-loop"
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 border inline-flex items-center gap-2"
-            style={{ color: 'var(--fg)', borderColor: 'var(--border)', backgroundColor: 'var(--card-bg)' }}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 hover:shadow-lg inline-flex items-center gap-2"
+            style={{ backgroundColor: 'var(--accent)' }}
           >
             <BookOpen size={14} />
             Start Learning
@@ -269,6 +269,14 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
             <Dice5 size={14} />
             Surprise Me
           </button>
+          <Link
+            href="/engineering/12-interview-practice/00-cheat-sheet/01-last-day-reference"
+            className="text-sm font-medium underline-offset-4 hover:underline inline-flex items-center gap-1.5"
+            style={{ color: 'var(--muted)' }}
+          >
+            <ClipboardList size={13} />
+            Interview tomorrow?
+          </Link>
         </div>
 
       </div>{/* end hero */}
@@ -277,6 +285,8 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
         <TopicOfTheDay doc={featuredDoc} />
       </div>
 
+      {hasHistory && (
+      <>
       <SectionHeading
         eyebrow="Continue learning"
         title="Pick up your momentum"
@@ -501,6 +511,8 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
           </div>
         </div>
       </div>
+      </>
+      )}
 
       <SectionHeading
         eyebrow="Discover"
@@ -534,7 +546,7 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4 mb-10">
         <Link
           href={`/${surpriseDoc.slug.join('/')}`}
-          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          className="rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md lg:self-start"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
@@ -685,10 +697,10 @@ export default function HomePageClient({ pageCounts, docs, featuredDoc, initialS
       {/* ── Stats bar ─────────────────────────────────────────── */}
       <div className="mt-10 flex gap-6 flex-wrap items-center text-sm border-t pt-6" style={{ color: 'var(--muted)', borderColor: 'var(--border)' }}>
         {[
-          ['285+', 'Topic Files'],
-          ['1200+', 'Code Examples'],
+          ['370+', 'Topic Files'],
+          ['4300+', 'Code Examples'],
           ['700+', 'Interview Q&As'],
-          ['9',    'Categories'],
+          ['11',   'Categories'],
         ].map(([num, label]) => (
           <div key={label} className="flex items-baseline gap-1.5">
             <span className="text-2xl font-extrabold tabular-nums" style={{ color: 'var(--accent)', letterSpacing: '-0.02em' }}>{num}</span>
