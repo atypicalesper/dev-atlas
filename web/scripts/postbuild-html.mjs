@@ -17,9 +17,9 @@ const clarityImg = CLARITY_ID ? ' https://*.clarity.ms https://c.bing.com' : '';
 const CSP = [
   `default-src 'none'`,
   `script-src 'self' 'unsafe-inline'${clarityScript}`,
-  `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+  `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob:${clarityImg}`,
-  `font-src 'self' https://fonts.gstatic.com`,
+  `font-src 'self'`,
   `connect-src 'self'${clarityConnect}`,
   `frame-src 'none'`,
   `object-src 'none'`,

@@ -8,6 +8,7 @@ import { Search as SearchIcon, X, ArrowRight, Clock, Hash, TrendingUp, Shuffle, 
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import type { SearchItem } from '@/lib/docs';
+import { expandSearchIndex, type CompactSearchIndex } from '@/lib/search-index';
 import { getBookmarks, toggleBookmark } from '@/lib/progress';
 import { useNotebook } from '@/lib/notebook';
 
@@ -21,9 +22,9 @@ function loadSearchIndex(): Promise<SearchItem[]> {
     const base = process.env.NEXT_PUBLIC_BASE_PATH || '';
     indexPromise = fetch(`${base}/search-index.json`)
       .then(res => res.json())
-      .then((data: SearchItem[]) => {
-        indexCache = data;
-        return data;
+      .then((data: CompactSearchIndex) => {
+        indexCache = expandSearchIndex(data);
+        return indexCache;
       });
   }
   return indexPromise;

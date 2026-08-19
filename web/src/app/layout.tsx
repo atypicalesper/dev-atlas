@@ -1,9 +1,31 @@
 import type { Metadata } from 'next';
+import { Fraunces, Work_Sans, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { buildNavTree } from '@/lib/docs';
 import Shell from '@/components/Shell';
 import { NotebookProvider } from '@/lib/notebook';
 import './globals.css';
+
+// Self-hosted at build time — avoids the stylesheet -> Google CSS -> font binary
+// request chain that CSS @import forces onto the critical path.
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  axes: ['opsz'],
+  display: 'swap',
+  variable: '--font-fraunces',
+});
+
+const workSans = Work_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-work-sans',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains-mono',
+});
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
@@ -51,7 +73,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const nav = buildNavTree();
 
   return (
-    <html lang="en" translate="no" suppressHydrationWarning>
+    <html
+      lang="en"
+      translate="no"
+      className={`${fraunces.variable} ${workSans.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} themes={['light', 'paper', 'dark', 'midnight', 'ocean', 'forest', 'dawn', 'slate']}>
           <NotebookProvider>

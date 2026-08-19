@@ -1,6 +1,5 @@
-/* ── Fonts ─────────────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Work+Sans:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&display=swap');
+/* Fonts are self-hosted via next/font in layout.tsx (--font-fraunces,
+   --font-work-sans, --font-jetbrains-mono). */
 
 @tailwind base;
 @tailwind components;
@@ -13,8 +12,9 @@ html {
 
 /* ── CSS custom properties ──────────────────────────────────────────────────── */
 :root {
-  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --font-body: 'Work Sans', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --font-body: var(--font-work-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
   --bg: #fafafa;
   --fg: #0f1117;
   --sidebar-bg: #f4f5f7;
@@ -315,7 +315,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0.15em 0.4em;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 0.85em;
   color: var(--accent);
 }
@@ -336,7 +336,7 @@ body {
 .prose pre code {
   display: block;
   padding: 1.25rem 1.5rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 0.875rem;
   line-height: 1.7;
   color: #cdd6f4;
@@ -467,7 +467,7 @@ body {
 
 /* Code block language label */
 .code-lang {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 0.7rem;
   color: var(--muted);
   padding: 0.4rem 1rem 0;
@@ -484,7 +484,7 @@ body {
   padding: 0.2rem 0.55rem;
   border-radius: 5px;
   font-size: 0.7rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s ease, background-color 0.15s ease;
@@ -516,7 +516,7 @@ body {
   padding: 0.1em 0.35em;
   border-radius: 4px;
   font-size: 0.75em;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   border: 1px solid var(--border);
   background: var(--card-bg);
   color: var(--fg);
@@ -672,7 +672,7 @@ body {
   border: 1px solid var(--border);
   background: var(--card-bg);
   color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 /* ── Visited badge ───────────────────────────────────────────────────────────── */
