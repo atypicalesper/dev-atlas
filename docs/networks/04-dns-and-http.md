@@ -73,7 +73,7 @@ Every domain is made up of different types of DNS records, each serving a specif
 
 #### A Record — IPv4 Address
 
-The most fundamental record. Maps a hostname directly to an IPv4 address. When someone visits `example.com`, their resolver ultimately returns an A record — an IP address their browser can connect to.
+The most fundamental record. Maps a hostname directly to an IPv4 address. When someone visits `example.com`, their resolver returns an A record: an IP address their browser can connect to.
 
 ```
 ; Format: name  TTL  class  type  value
