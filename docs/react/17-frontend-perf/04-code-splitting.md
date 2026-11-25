@@ -2,7 +2,7 @@
 
 Code splitting breaks one large JavaScript bundle into smaller chunks that can load on demand.
 
-This matters because performance is not just download size. It is also:
+This affects more than download size. It also changes:
 
 - parse time
 - compile time
@@ -129,7 +129,7 @@ Poor chunk boundaries can cause shared libraries to appear in multiple chunks.
 
 ### SSR / client boundary confusion
 
-In modern React and Next.js apps, code splitting interacts with server/client boundaries. Some code should not be sent to the browser at all. That is even better than splitting it.
+In modern React and Next.js apps, code splitting interacts with server/client boundaries. Keeping code on the server avoids sending it to the browser at all.
 
 ---
 

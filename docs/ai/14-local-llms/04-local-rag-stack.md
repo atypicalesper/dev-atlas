@@ -1,6 +1,6 @@
 # Local RAG Stack
 
-One of the most useful local AI setups is not just a local chat model, but a fully local RAG pipeline:
+A local RAG setup runs the full retrieval pipeline on your own infrastructure:
 
 ```text
 documents
@@ -10,7 +10,7 @@ documents
   → local LLM
 ```
 
-That gives you privacy and no per-query API cost.
+It keeps documents within your network and removes per-query API costs.
 
 ---
 
@@ -70,7 +70,7 @@ That gives you privacy and no per-query API cost.
 - test retrieval separately from generation
 - start small before optimizing for throughput
 
-Local RAG systems often fail because retrieval quality is weak, not because the local generator is bad.
+In practice, weak chunking or retrieval quality causes many local RAG failures.
 
 ---
 

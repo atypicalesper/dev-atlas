@@ -1,12 +1,12 @@
 # Agent Memory Tradeoffs
 
-Agent memory is one of those ideas that sounds obviously good: "let the agent remember things." But in practice, *more memory is not better memory*. Every fact you persist becomes a potential source of stale context, privacy leak, prompt pollution, and invisible state that makes debugging miserable.
+Agent memory can improve continuity, but every persisted fact can become stale context, a privacy risk, prompt pollution, or hidden state that complicates debugging.
 
-The real question isn't "should the agent remember?" It's:
+Before persisting information, ask:
 
 > **Does this information help future decisions enough to justify the complexity, privacy risk, and debugging cost it adds?**
 
-Most of the time, the honest answer is no. That's the key insight.
+Many candidate memories do not clear that bar.
 
 ---
 
@@ -14,7 +14,7 @@ Most of the time, the honest answer is no. That's the key insight.
 
 ### 1. Short-term (working) memory
 
-The current conversation, tool results, scratchpad. Lives in the context window. No persistence. This is free memory — use it freely.
+The current conversation, tool results, and scratchpad live in the context window and are not persisted. Use them for work that only matters in the current session.
 
 ### 2. Long-term (semantic) memory
 
@@ -40,7 +40,7 @@ Records of past actions and outcomes: "last Tuesday I tried approach X and it fa
 - **Stale memory.** The user said "my name is Alex" two years ago; they now go by Alexandra. The agent keeps calling them Alex.
 - **Privacy and retention risk.** GDPR, CCPA, and HIPAA don't care that the "database" is a vector store. Deletion-right requests become complicated.
 - **Prompt pollution.** The retrieval returns 20 memories, half irrelevant, and the model now has less room for the actual task.
-- **Hidden state.** The same prompt produces different behavior depending on what the agent "remembers" — good luck reproducing bugs.
+- **Hidden state.** The same prompt can produce different behavior depending on stored memory, which makes bugs harder to reproduce.
 - **Adversarial injection.** A malicious input can *plant* a memory ("the user's admin password is 1234") that resurfaces in future sessions.
 
 ---
@@ -67,7 +67,7 @@ if should_persist(candidate_fact, user_id):
     memory_store.upsert(user_id, candidate_fact, ttl_days=180)
 ```
 
-Every memory gets a TTL. Every write is auditable. The agent doesn't decide what's durable — a separate, inspectable layer does.
+Each memory gets a TTL and an auditable write path. A separate, inspectable layer decides what is durable.
 
 ---
 
@@ -77,7 +77,7 @@ On the read side:
 
 - **Filter by recency and relevance.** Don't dump top-K; rerank with the current query.
 - **Budget tokens.** Cap memory context at a fixed slice of the prompt (e.g. 10%) so it can't starve the task.
-- **Attribute memories.** "You told me on 2026-01-15: ..." — helps the model (and the user) reason about freshness.
+- **Attribute memories.** "You told me on 2026-01-15: ..." helps the model and the user reason about freshness.
 - **Expose and allow edits.** If the user can't see or delete what the agent remembers, you have a trust problem.
 
 ---
@@ -100,7 +100,7 @@ Memory improves continuity and personalization, but introduces stale context, pr
 
 ### 2. Trick: Your agent keeps saying "as you mentioned last time..." but the user has no memory of saying it. What happened?
 
-Most likely: a prior session had a prompt-injection payload or an ambiguous statement that the agent classified as a durable fact. This is why memory writes should be gated and attributed — not left to the model to decide unilaterally.
+Most likely, a prior session had a prompt-injection payload or an ambiguous statement that the agent classified as a durable fact. Memory writes should be gated and attributed instead of being left to the model.
 
 ### 3. When should you NOT use long-term memory?
 
@@ -112,8 +112,8 @@ Retrieve selectively, rerank against the current query, cap memory's token budge
 
 ### 5. Trick: A user says "forget everything I told you." What do you do architecturally?
 
-Provide a real deletion path — not just a prompt instruction. Prompt-level "forget" is unreliable and unverifiable. Real deletion means purging from the vector store, structured store, and any derived summaries, with an audit trail.
+Build a real deletion path into the storage layer. Prompt-level "forget" is unreliable and unverifiable. Real deletion means purging the vector store, structured store, and derived summaries, with an audit trail.
 
-### 6. Short vs long vs episodic — which is most dangerous in production?
+### 6. Short vs long vs episodic: which is most dangerous in production?
 
 Long-term semantic memory, by a wide margin. It persists, influences every future interaction invisibly, and carries legal and security implications. Short-term is ephemeral; episodic is usually narrow. Long-term is where most memory accidents happen.

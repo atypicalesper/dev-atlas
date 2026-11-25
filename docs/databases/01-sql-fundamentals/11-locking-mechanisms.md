@@ -1,10 +1,10 @@
 # Locking Mechanisms
 
-Locks are how databases coordinate access when concurrent work could otherwise break correctness.
+Locks let databases coordinate access when concurrent work could otherwise break correctness.
 
 MVCC explains visibility. Locking explains waiting.
 
-You usually care about locking when you need one of these:
+Use locking when you need to:
 
 - prevent two writers from changing the same row at once
 - claim work safely from a table-backed queue
@@ -46,7 +46,7 @@ Examples:
 - one migration runner at a time
 - one scheduler instance per tenant
 
-Use them carefully. They are powerful, but easier to misuse than row locks.
+Advisory locks need clear ownership and release rules because they are easier to misuse than row locks.
 
 ---
 
@@ -153,7 +153,7 @@ Avoid:
 - missing index on the queue predicate makes lock-based workers slow
 - retries without idempotency can still duplicate side effects
 
-Locking solves coordination, not business-level deduplication by itself.
+Locks coordinate access. Idempotency is still needed to prevent repeated business side effects.
 
 ---
 

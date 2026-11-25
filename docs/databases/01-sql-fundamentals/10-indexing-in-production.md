@@ -1,15 +1,13 @@
 # Indexing in Production
 
-Basic indexing knowledge is about knowing that indexes speed up reads.
-
-Production indexing knowledge is about knowing:
+Indexes speed up reads. Operating them in production also requires knowing:
 
 - which index shape matches the query
 - what the write cost is
 - how to roll an index out safely
 - how to tell when an index is not helping anymore
 
-That is the difference between "I know indexing" and "I can operate a live database."
+These decisions determine whether an index helps a live database without imposing unnecessary write cost.
 
 ---
 
@@ -117,9 +115,7 @@ An index that reduces one report query by 500ms but slows every write path may s
 
 ### Revisit old indexes
 
-Indexes are not "set and forget."
-
-Look for:
+Review indexes as the workload changes. Look for:
 
 - unused indexes
 - overlapping indexes
@@ -152,7 +148,7 @@ Too many indexes cause:
 - more disk usage
 - bigger memory pressure
 
-This is why index design is part of systems design, not just SQL syntax.
+Index design affects capacity planning as well as SQL query performance.
 
 ---
 

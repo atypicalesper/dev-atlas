@@ -9,7 +9,7 @@ On the frontend, that usually means delaying:
 - heavy widgets like editors, maps, or charts
 - data for UI that the user may never open
 
-The goal is simple: do less work during initial page load.
+It reduces the work required during initial page load.
 
 ---
 
@@ -30,7 +30,7 @@ Bad candidates:
 - the primary interaction path of the first screen
 - tiny components whose split cost is bigger than the saved bytes
 
-Lazy loading is a performance tool, not a reflex.
+Use lazy loading when it removes work from the startup path without delaying a primary interaction.
 
 ---
 
@@ -96,7 +96,7 @@ Do not lazy load the main LCP image above the fold. That delays the exact thing 
 
 ## Data Lazy Loading
 
-Not all data should be fetched on first render.
+Fetch data on first render only when the initial UI requires it.
 
 Examples:
 
@@ -133,7 +133,7 @@ Bad fallbacks:
 - lazy loading critical UI
 - forgetting that data and code can each cause waiting
 
-The best lazy loading strategy shortens startup without making interactions feel delayed later.
+A good lazy-loading strategy shortens startup without making later interactions feel delayed.
 
 ---
 
