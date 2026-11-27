@@ -1,12 +1,12 @@
 # Mocking Strategy
 
-Mocking is not good or bad by itself. The real question is:
+The value of a mock depends on what the test needs to establish:
 
 ```
 What are we trying to learn from this test?
 ```
 
-Mock aggressively when isolating business logic. Mock sparingly when verifying integration behavior.
+Use mocks freely when isolating business logic. Keep integrations real when the interaction itself is under test.
 
 ---
 
@@ -33,7 +33,7 @@ Mock aggressively when isolating business logic. Mock sparingly when verifying i
 - duplicating the implementation in the test
 - mocking the exact library methods you do not own across every test
 
-If every test needs a huge mock graph, the production code may be too coupled.
+If every test needs a large mock graph, the production code may be too coupled.
 
 ---
 

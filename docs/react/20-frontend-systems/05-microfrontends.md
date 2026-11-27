@@ -1,21 +1,19 @@
 # Microfrontends
 
-Microfrontends split a frontend platform into independently developed and deployed pieces owned by different teams.
-
-The appeal is obvious:
+Microfrontends split a frontend platform into independently developed and deployed pieces owned by different teams. They can provide:
 
 - teams ship independently
 - codebases stay smaller per team
 - ownership becomes clearer
 
-The danger is also obvious:
+They also introduce:
 
 - UX fragmentation
 - duplicated dependencies
 - inconsistent routing and auth
 - many deployable pieces with one user experience
 
-Microfrontends are an organization strategy as much as a technical one.
+The pattern mainly addresses organizational scale and release independence.
 
 ---
 
@@ -82,7 +80,7 @@ Bad:
 
 ## The Real Boundaries
 
-The most important boundary is not "component." It is "business domain."
+Business domains should define the boundaries.
 
 Good boundaries:
 
@@ -133,7 +131,7 @@ Important guardrails:
 - set hard bundle budgets per slice
 - keep the shell thin
 
-The user experiences one app, not your org chart.
+Performance budgets should cover both the assembled user experience and individual slices.
 
 ---
 
@@ -169,7 +167,7 @@ If a modular monolith solves the problem, prefer that first.
 
 ### What are microfrontends?
 
-They are an architectural pattern where independent teams own separate slices of a frontend platform and integrate them into one user experience. The real benefit is team autonomy, not technical novelty.
+They are an architectural pattern where independent teams own separate slices of a frontend platform and integrate them into one user experience. Their main benefit is team autonomy.
 
 ### What are the biggest risks?
 

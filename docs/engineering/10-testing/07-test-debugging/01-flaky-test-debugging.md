@@ -1,8 +1,6 @@
 # Flaky Test Debugging
 
-A flaky test is one that fails without a code change.
-
-That is not just annoying. It erodes trust in the whole test suite.
+A flaky test fails without a code change. Over time, it erodes trust in the whole test suite.
 
 ---
 
@@ -69,7 +67,7 @@ Log enough to see ordering, state, and timing.
 - mark flaky tests as retried forever and move on
 - ignore the issue because "CI eventually passes"
 
-Retries can reduce noise temporarily, but they are not the root fix.
+Retries can reduce noise temporarily. They do not fix the nondeterminism behind the failure.
 
 ---
 

@@ -1,15 +1,13 @@
 # Efficient State Management
 
-Efficient state management is not about picking the fanciest library.
-
-It is about:
+Efficient state management means:
 
 - keeping the right state in the right place
 - avoiding unnecessary re-renders
 - separating server state from client state
 - choosing a tool whose complexity matches the app
 
-Most React state problems are placement problems before they are library problems.
+Many React state problems come from placing state at the wrong scope.
 
 ---
 
@@ -44,9 +42,7 @@ Examples:
 - profile data
 - dashboard metrics
 
-This is not best handled by hand-rolled global state. Usually use a server-state tool such as TanStack Query or RTK Query.
-
-The biggest anti-pattern is storing remote cached data in a global UI store without a real cache strategy.
+Avoid handling server state with a hand-rolled global store when a server-state tool such as TanStack Query or RTK Query fits the problem. Storing remote cached data in a global UI store without a cache strategy creates stale-data and invalidation problems.
 
 ---
 
@@ -106,7 +102,7 @@ Strengths:
 - small re-render surface
 - flexible composition
 
-Use this style when state really is graph-like, not just because "atoms sound cool."
+Use atom-based state when the application has a real graph of small, derived state units.
 
 ---
 
@@ -178,7 +174,7 @@ Use:
 - Redux Toolkit for large structured apps
 - server-state tools for fetched data
 
-There is no medal for using one tool for every state problem.
+No single state-management tool fits every type of application state.
 
 ---
 

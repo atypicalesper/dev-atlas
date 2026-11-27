@@ -1,15 +1,13 @@
 # Concurrency Handling
 
-Concurrency handling is the discipline of making many requests, workers, or transactions operate at the same time without corrupting state.
-
-It is not just "can my app process multiple requests?" It is:
+Concurrency handling keeps parallel requests, workers, and transactions from corrupting shared state. It answers questions such as:
 
 - do two workers claim the same job
 - do two users overwrite each other
 - do retries create duplicate side effects
 - do bursts overwhelm a dependency
 
-The hard part is not parallel execution. The hard part is preserving correctness under contention.
+The goal is to preserve correctness when work overlaps and resources are contested.
 
 ---
 
@@ -50,7 +48,7 @@ But transactions alone do not solve every race. Isolation level and lock behavio
 
 ### 2. Unique constraints
 
-A unique constraint is one of the strongest concurrency tools because the database enforces it centrally.
+A unique constraint is a reliable concurrency control because the database enforces it centrally.
 
 Examples:
 
@@ -137,7 +135,7 @@ Typical controls:
 - circuit breaker
 - bulkhead isolation
 
-If everything can call everything at once, one hotspot becomes a platform incident.
+Without limits, a hotspot can let one overloaded dependency affect the whole platform.
 
 ---
 
@@ -192,7 +190,7 @@ The best concurrency solution is usually the one with the least moving parts.
 
 ### How do you handle concurrency safely?
 
-Start by identifying the invariant you must protect, then choose the smallest mechanism that enforces it: unique constraints, transactions, optimistic locking, pessimistic locking, queues, or idempotency keys. Concurrency handling is really invariant protection under parallel execution.
+Identify the invariant you must protect, then choose the smallest mechanism that enforces it: unique constraints, transactions, optimistic locking, pessimistic locking, queues, or idempotency keys.
 
 ### When would you use optimistic vs pessimistic locking?
 

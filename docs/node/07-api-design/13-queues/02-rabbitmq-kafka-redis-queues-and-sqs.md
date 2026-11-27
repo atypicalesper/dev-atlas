@@ -1,10 +1,6 @@
 # RabbitMQ, Kafka, Redis Queues, and SQS
 
-Not all "message queue" systems solve the same problem.
-
-Some are task queues. Some are event logs. Some are lightweight background job engines. Some are fully managed cloud services.
-
-If you choose the wrong one, you can still ship, but the operational shape will fight you.
+RabbitMQ, Kafka, Redis queues, and SQS serve different workloads: task distribution, replayable event streams, application jobs, and managed cloud queues. Choosing a broker whose delivery model does not match the workload creates avoidable operational friction.
 
 ---
 
@@ -19,7 +15,7 @@ Great when you need:
 - acknowledgements
 - per-message handling patterns
 
-Think: work distribution and broker-driven routing.
+RabbitMQ fits work distribution with broker-driven routing.
 
 ### Kafka
 
@@ -30,7 +26,7 @@ Great when you need:
 - high throughput
 - ordered consumption within partitions
 
-Think: event log and streaming platform, not just a queue.
+Kafka is an event log and streaming platform with queue-like consumer groups.
 
 ### Redis queues / BullMQ
 
@@ -41,7 +37,7 @@ Great when you need:
 - retries
 - cron-like scheduling
 
-Think: application job runner with Redis as the backbone.
+BullMQ is an application job runner backed by Redis.
 
 ### SQS
 
@@ -51,7 +47,7 @@ Great when you need:
 - simple worker pipelines
 - minimal broker operations
 
-Think: durable cloud queue, not a full routing fabric.
+SQS is a durable managed cloud queue with a deliberately smaller routing model.
 
 ---
 
@@ -68,7 +64,7 @@ Think: durable cloud queue, not a full routing fabric.
 
 ## When to Choose Each
 
-## RabbitMQ
+### RabbitMQ
 
 Choose RabbitMQ when:
 
@@ -83,7 +79,7 @@ Typical examples:
 - task dispatch with priority or routing patterns
 - legacy enterprise integrations
 
-## Kafka
+### Kafka
 
 Choose Kafka when:
 
@@ -99,7 +95,7 @@ Typical examples:
 - CDC ingestion
 - event-driven microservices
 
-## Redis queues / BullMQ
+### Redis queues / BullMQ
 
 Choose BullMQ when:
 
@@ -115,7 +111,7 @@ Typical examples:
 - webhook retries
 - report generation
 
-## SQS
+### SQS
 
 Choose SQS when:
 
@@ -178,7 +174,7 @@ Ask these questions up front:
 - where do poison messages go
 - how will we observe stuck consumers
 
-The queue is only half the system. The retry and dead-letter policy is the other half.
+Each queue design needs explicit retry, observability, and dead-letter policies.
 
 ---
 

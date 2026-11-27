@@ -321,7 +321,7 @@ const t = new Transform({ objectMode: true, highWaterMark: 16 }); // 16 objects 
 
 ## Q10: Why does `process.stdout` never emit 'finish'?
 
-`process.stdout` and `process.stderr` are special "non-closeable" streams. Unlike regular file or socket streams, calling `end()` on them is a no-op — they are designed to remain open for the entire lifetime of the process. This means any pipeline that terminates into `process.stdout` will not trigger normal stream lifecycle events like `'finish'`. Additionally, because `process.stdout` stays open as an active handle, the Node.js process itself will not exit naturally if you only close the source stream — you need to either call `process.exit()` explicitly or ensure all other active handles are closed.
+`process.stdout` and `process.stderr` are special "non-closeable" streams. Unlike regular file or socket streams, calling `end()` on them is a no-op: they are designed to remain open for the entire lifetime of the process. This means any pipeline that terminates into `process.stdout` will not trigger normal stream lifecycle events like `'finish'`. Also, because `process.stdout` stays open as an active handle, the Node.js process itself will not exit naturally if you only close the source stream: call `process.exit()` explicitly or ensure all other active handles are closed.
 
 ```javascript
 // process.stdout, process.stderr are special writable streams that

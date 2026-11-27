@@ -290,4 +290,4 @@ A: The scope chain is the sequence of environments a variable lookup travels thr
 A: `var` is function-scoped (or global), `let` and `const` are block-scoped. `var` is hoisted and initialized to `undefined`, `let`/`const` are hoisted but in the TDZ until their declaration line.
 
 **Q: Can let/const be redeclared?**
-A: No. `let` and `const` cannot be redeclared in the same scope. `var` can be redeclared (second declaration is ignored). `const` additionally cannot be reassigned after initialization.
+A: No. `let` and `const` cannot be redeclared in the same scope. `var` can be redeclared (second declaration is ignored). `const` also cannot be reassigned after initialization.

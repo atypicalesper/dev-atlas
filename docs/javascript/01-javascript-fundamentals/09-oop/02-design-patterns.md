@@ -491,7 +491,7 @@ for (const n of range) console.log(n); // 1 3 5 7 9
 
 ### Chain of Responsibility
 
-The Chain of Responsibility pattern lets a request travel through an ordered sequence of handlers where each handler decides independently whether to handle it, pass it on, or short-circuit. The sender doesn't know which handler will ultimately respond. This is the canonical model for middleware pipelines (Express, Koa, HTTP interceptors) and validation chains. The key advantage over a single monolithic handler is that responsibilities are separated into small, testable units that can be added, removed, or reordered without modifying any existing handler.
+The Chain of Responsibility pattern lets a request travel through an ordered sequence of handlers where each handler decides independently whether to handle it, pass it on, or short-circuit. The sender does not know which handler will respond. This is the canonical model for middleware pipelines (Express, Koa, HTTP interceptors) and validation chains. The key advantage over a single monolithic handler is that responsibilities are separated into small, testable units that can be added, removed, or reordered without modifying any existing handler.
 
 Pass a request along a chain of handlers:
 

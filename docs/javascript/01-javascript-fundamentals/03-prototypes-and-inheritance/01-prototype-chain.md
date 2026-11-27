@@ -278,7 +278,7 @@ getFullChain(Dog);
 A: `__proto__` is a property on every object that points to its actual prototype in the chain. `.prototype` is a property on constructor functions that becomes the `__proto__` of instances created with `new`. They're related but different: `new Dog().__proto__ === Dog.prototype`.
 
 **Q: What sits at the top of the prototype chain?**
-A: `Object.prototype`. Its `__proto__` is `null`, which terminates the chain. Every normal object ultimately inherits from `Object.prototype` (methods like `toString`, `hasOwnProperty`, `valueOf`).
+A: `Object.prototype`. Its `__proto__` is `null`, which terminates the chain. Every normal object inherits from `Object.prototype` (methods like `toString`, `hasOwnProperty`, `valueOf`).
 
 **Q: What is prototype pollution and how do you prevent it?**
 A: Prototype pollution is when user-controlled data is used to set properties on `Object.prototype`, affecting all objects. Prevention: validate keys (reject `__proto__`, `constructor`, `prototype`), use `Object.create(null)` for data stores, use `structuredClone` for deep copies, freeze `Object.prototype`.

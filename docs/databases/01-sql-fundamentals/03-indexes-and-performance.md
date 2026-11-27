@@ -52,7 +52,7 @@ CREATE INDEX idx_posts_content ON posts USING GIN(to_tsvector('english', content
 
 ## The Left-Prefix Rule (Composite Index)
 
-A composite index can only be used if the query filters on a prefix of the indexed columns starting from the leftmost one. This is because the index is sorted first by the first column, then by the second within each first-column value, and so on. If you skip the first column, the remaining columns are not sorted in any predictable order. Additionally, a range condition on a middle column breaks the chain — columns after the range cannot be used from the index even if they are present in the query.
+A composite index can only be used if the query filters on a prefix of the indexed columns starting from the leftmost one. This is because the index is sorted first by the first column, then by the second within each first-column value, and so on. If you skip the first column, the remaining columns are not sorted in any predictable order. A range condition on a middle column also breaks the chain: columns after the range cannot be used from the index even if they are present in the query.
 
 ```sql
 -- Index on (last_name, first_name, age)
